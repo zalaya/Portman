@@ -1,5 +1,3 @@
-use std::fmt;
-
 use super::network::{ Listener, Protocol };
 use super::process::ProcessTable;
 
@@ -28,34 +26,7 @@ impl PortUsage {
 
     pub fn matches(&self, lowercase_needle: &str) -> bool {
         self.process_label().to_lowercase().contains(lowercase_needle)
-            || self.port.to_string().contains(lowercase_needle)
+            || self.address().to_lowercase().contains(lowercase_needle)
             || self.pid.to_string().contains(lowercase_needle)
-    }
-}
-
-impl PortUsage {
-    fn fmt_found(&self, formatter: &mut fmt::Formatter<'_>, name: &str) -> fmt::Result {
-        write!(
-            formatter,
-            "{}/{} -> {} ({})",
-            self.port, self.protocol, name, self.pid
-        )
-    }
-
-    fn fmt_not_found(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            formatter,
-            "{}/{} -> Process {} not found (exited?)",
-            self.port, self.protocol, self.pid
-        )
-    }
-}
-
-impl fmt::Display for PortUsage {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.process_name {
-            Some(name) => self.fmt_found(formatter, name),
-            None => self.fmt_not_found(formatter),
-        }
     }
 }

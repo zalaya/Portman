@@ -4,20 +4,18 @@ use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
 use ratatui::widgets::{ Block, BorderType, Borders, Padding, Paragraph };
 
-use super::theme;
+use super::{ panel, theme };
 
-pub fn render(frame: &mut Frame, area: Rect) {
+pub fn render_status(frame: &mut Frame, area: Rect, message: &str) {
+    let text = Line::from(Span::styled(message, Style::default().fg(theme::DANGER).add_modifier(Modifier::BOLD)));
+
+    panel::single_line(frame, area, text, theme::DANGER);
+}
+
+pub fn render(frame: &mut Frame, area: Rect, hints: &[(&str, &str)]) {
     let mut spans = Vec::new();
 
-    for (index, (key, label)) in [
-        ("↑/↓", "move"),
-        ("type", "search"),
-        ("ctrl+r", "refresh"),
-        ("esc", "quit"),
-    ]
-    .into_iter()
-    .enumerate()
-    {
+    for (index, (key, label)) in hints.iter().enumerate() {
         if index > 0 {
             spans.push(separator());
         }

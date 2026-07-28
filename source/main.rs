@@ -3,6 +3,7 @@ mod data;
 mod ui;
 
 use std::io::{ Stdout, stdout };
+use std::time::Duration;
 
 use anyhow::Result;
 use app::App;
@@ -11,6 +12,8 @@ use crossterm::execute;
 use crossterm::terminal::{ EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode };
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+
+const REFRESH_INTERVAL: Duration = Duration::from_secs(2);
 
 fn main() -> Result<()> {
     enable_raw_mode()?;
@@ -32,6 +35,14 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
     loop {
         terminal.draw(|frame| ui::draw(frame, app))?;
 
+        if !event::poll(REFRESH_INTERVAL)? {
+            if app.kill_target.is_none() {
+                app.refresh()?;
+            }
+
+            continue;
+        }
+
         let Event::Key(key) = event::read()? else {
             continue;
         };
@@ -40,12 +51,43 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
             continue;
         }
 
+        app.status = None;
+
+        if app.kill_target.is_some() {
+            match key.code {
+                KeyCode::Char('y') | KeyCode::Enter => app.confirm_kill()?,
+                KeyCode::Char('n') | KeyCode::Esc => app.cancel_kill(),
+                _ => {}
+            }
+
+            continue;
+        }
+
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            return Ok(());
+        }
+
+        if key.code == KeyCode::Char('r') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            app.refresh()?;
+            continue;
+        }
+
+        if app.details.is_some() {
+            match key.code {
+                KeyCode::Left | KeyCode::Esc => app.close_details(),
+                _ => {}
+            }
+
+            continue;
+        }
+
         match key.code {
             KeyCode::Esc => return Ok(()),
-            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => return Ok(()),
-            KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => app.refresh()?,
             KeyCode::Down => app.next(),
             KeyCode::Up => app.previous(),
+            KeyCode::Right => app.open_details(),
+            KeyCode::Enter => app.request_kill(),
+            KeyCode::Tab => app.cycle_sort(),
             KeyCode::Backspace => app.pop_filter_char(),
             KeyCode::Char(character) => app.push_filter_char(character),
             _ => {}
