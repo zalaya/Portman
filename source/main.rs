@@ -9,8 +9,11 @@ fn main() -> Result<()> {
 
     for listener in listeners {
         let process = Process::from_pid(listener.pid)?;
+        let port = listener.port;
+        let pid = process.pid;
+        let name = process.name;
 
-        println!("{} -> {} ({})", listener.port, process.name, process.pid);
+        println!("{} -> {} ({})", port, name, pid);
     }
 
     Ok(())

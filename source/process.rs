@@ -1,4 +1,5 @@
-use anyhow::Result;
+use anyhow::{ Context, Result };
+use sysinfo::{ Pid, ProcessesToUpdate, System };
 
 #[derive(Debug)]
 pub struct Process {
@@ -15,6 +16,14 @@ impl Process {
     }
 
     pub fn from_pid(pid: u32) -> Result<Self> {
-        Ok(Self::new(pid, format!("process-{pid}")))
+        let mut system = System::new();
+
+        system.refresh_processes(ProcessesToUpdate::All, true);
+
+        let process = system
+            .process(Pid::from_u32(pid))
+            .with_context(|| format!("Process {} not found", pid))?;
+
+        Ok(Self::new(pid, process.name().to_string_lossy()))
     }
 }
