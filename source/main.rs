@@ -36,7 +36,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
         terminal.draw(|frame| ui::draw(frame, app))?;
 
         if !event::poll(REFRESH_INTERVAL)? {
-            if app.kill_target.is_none() {
+            if app.kill_target.is_none() && app.open_prompt.is_none() {
                 app.refresh()?;
             }
 
@@ -63,12 +63,31 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
             continue;
         }
 
+        if app.open_prompt.is_some() {
+            match key.code {
+                KeyCode::Enter => app.confirm_open()?,
+                KeyCode::Esc => app.cancel_open_prompt(),
+                KeyCode::Tab => app.toggle_open_focus(),
+                KeyCode::Left | KeyCode::Right => app.toggle_open_protocol(),
+                KeyCode::Backspace => app.pop_open_char(),
+                KeyCode::Char(character) => app.push_open_char(character),
+                _ => {}
+            }
+
+            continue;
+        }
+
         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
             return Ok(());
         }
 
         if key.code == KeyCode::Char('r') && key.modifiers.contains(KeyModifiers::CONTROL) {
             app.refresh()?;
+            continue;
+        }
+
+        if key.code == KeyCode::Char('o') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            app.start_open_prompt();
             continue;
         }
 
@@ -86,7 +105,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
             KeyCode::Down => app.next(),
             KeyCode::Up => app.previous(),
             KeyCode::Right => app.open_details(),
-            KeyCode::Enter => app.request_kill(),
+            KeyCode::Delete => app.request_kill(),
             KeyCode::Tab => app.cycle_sort(),
             KeyCode::Backspace => app.pop_filter_char(),
             KeyCode::Char(character) => app.push_filter_char(character),

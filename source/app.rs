@@ -3,21 +3,38 @@ use std::collections::HashSet;
 use anyhow::Result;
 use ratatui::widgets::TableState;
 
-use crate::data::{ network, port_usage::PortUsage, process, process::ProcessTable };
+use crate::data::network::Protocol;
+use crate::data::{ network, opener, port_usage::PortUsage, process, process::ProcessTable };
 
 pub struct KillTarget {
     pub pid: u32,
     pub label: String,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum OpenField {
+    Port,
+    Command,
+}
+
+pub struct OpenPrompt {
+    pub port_input: String,
+    pub protocol: Protocol,
+    pub command: String,
+    pub focus: OpenField,
+}
+
 pub struct Details {
     pub address: String,
+    pub bind: String,
+    pub exposed: bool,
     pub process: process::ProcessDetails,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum SortKey {
     Port,
+    Bind,
     Process,
     Pid,
 }
@@ -26,6 +43,7 @@ impl SortKey {
     pub fn label(self) -> &'static str {
         match self {
             SortKey::Port => "port",
+            SortKey::Bind => "bind",
             SortKey::Process => "process",
             SortKey::Pid => "pid",
         }
@@ -33,7 +51,8 @@ impl SortKey {
 
     fn next(self) -> Self {
         match self {
-            SortKey::Port => SortKey::Process,
+            SortKey::Port => SortKey::Bind,
+            SortKey::Bind => SortKey::Process,
             SortKey::Process => SortKey::Pid,
             SortKey::Pid => SortKey::Port,
         }
@@ -50,6 +69,7 @@ pub struct App {
     pub status: Option<String>,
     pub new_keys: HashSet<(String, u32)>,
     seen_keys: Option<HashSet<(String, u32)>>,
+    pub open_prompt: Option<OpenPrompt>,
 }
 
 impl App {
@@ -64,6 +84,7 @@ impl App {
             status: None,
             new_keys: HashSet::new(),
             seen_keys: None,
+            open_prompt: None,
         };
 
         app.refresh()?;
@@ -86,13 +107,17 @@ impl App {
             Some(previous) => current_keys.difference(previous).cloned().collect(),
             None => HashSet::new(),
         };
+        
         self.seen_keys = Some(current_keys);
-
         self.select(previous_pid);
 
         if let Some(details) = &self.details {
-            self.details = process::details(details.process.pid)
-                .map(|process| Details { address: details.address.clone(), process });
+            self.details = process::details(details.process.pid).map(|process| Details {
+                address: details.address.clone(),
+                bind: details.bind.clone(),
+                exposed: details.exposed,
+                process,
+            });
         }
 
         Ok(())
@@ -117,8 +142,6 @@ impl App {
         self.select(None);
     }
 
-    // Selects `pid` if it's still present in the filtered list, otherwise falls back to the
-    // first match. `None` always jumps to the first match (filter changes, sort changes).
     fn select(&mut self, pid: Option<u32>) {
         let filtered = self.filtered();
 
@@ -171,6 +194,11 @@ impl App {
             return;
         };
 
+        if usage.pid == std::process::id() {
+            self.status = Some("That's portman itself (a port you opened) — can't kill it from here".to_string());
+            return;
+        }
+
         self.kill_target = Some(KillTarget {
             pid: usage.pid,
             label: format!("{} ({})", usage.process_label(), usage.address()),
@@ -200,12 +228,128 @@ impl App {
         };
 
         let address = usage.address();
+        let bind = usage.bind_label();
+        let exposed = usage.is_exposed();
 
-        self.details = process::details(usage.pid).map(|process| Details { address, process });
+        self.details = process::details(usage.pid).map(|process| Details { address, bind, exposed, process });
     }
 
     pub fn close_details(&mut self) {
         self.details = None;
+    }
+
+    pub fn start_open_prompt(&mut self) {
+        self.open_prompt = Some(OpenPrompt {
+            port_input: String::new(),
+            protocol: Protocol::Tcp,
+            command: String::new(),
+            focus: OpenField::Port,
+        });
+    }
+
+    pub fn cancel_open_prompt(&mut self) {
+        self.open_prompt = None;
+    }
+
+    pub fn toggle_open_focus(&mut self) {
+        if let Some(prompt) = &mut self.open_prompt {
+            prompt.focus = match prompt.focus {
+                OpenField::Port => OpenField::Command,
+                OpenField::Command => OpenField::Port,
+            };
+        }
+    }
+
+    pub fn toggle_open_protocol(&mut self) {
+        if let Some(prompt) = &mut self.open_prompt {
+            prompt.protocol = match prompt.protocol {
+                Protocol::Tcp => Protocol::Udp,
+                Protocol::Udp => Protocol::Tcp,
+            };
+        }
+    }
+
+    pub fn push_open_char(&mut self, character: char) {
+        let Some(prompt) = &mut self.open_prompt else {
+            return;
+        };
+
+        match prompt.focus {
+            OpenField::Port if character.is_ascii_digit() => {
+                if prompt.port_input.len() < 5 {
+                    prompt.port_input.push(character);
+                }
+            }
+            // Anything that isn't a port digit means the user has moved on to typing
+            // the command — jump focus there instead of silently dropping the key.
+            OpenField::Port => {
+                prompt.focus = OpenField::Command;
+                prompt.command.push(character);
+            }
+            OpenField::Command => prompt.command.push(character),
+        }
+    }
+
+    pub fn pop_open_char(&mut self) {
+        let Some(prompt) = &mut self.open_prompt else {
+            return;
+        };
+
+        match prompt.focus {
+            OpenField::Port => {
+                prompt.port_input.pop();
+            }
+            OpenField::Command => {
+                prompt.command.pop();
+            }
+        }
+    }
+
+    pub fn confirm_open(&mut self) -> Result<()> {
+        let Some(prompt) = self.open_prompt.take() else {
+            return Ok(());
+        };
+
+        let port = match prompt.port_input.parse::<u16>() {
+            Ok(port) if port > 0 => port,
+            _ => {
+                self.status = Some("Enter a port between 1 and 65535".to_string());
+                return Ok(());
+            }
+        };
+
+        let socket = match opener::open(port, prompt.protocol) {
+            Ok(socket) => socket,
+            Err(error) => {
+                self.status = Some(format!("Could not open {port}/{}: {error}", prompt.protocol));
+                return Ok(());
+            }
+        };
+
+        let command = prompt.command.trim();
+
+        if command.is_empty() {
+            drop(socket);
+            self.status = Some("Enter a command to run on that port".to_string());
+            return Ok(());
+        }
+
+        // Release the port ourselves so the launched command can bind it.
+        drop(socket);
+
+        let mut parts = command.split_whitespace();
+        let program = parts.next().expect("command is non-empty after trim");
+
+        match std::process::Command::new(program).args(parts).spawn() {
+            Ok(_) => {
+                self.status = Some(format!("Launched `{command}`"));
+                self.refresh()
+            }
+            Err(error) => {
+                self.status = Some(format!("Could not launch `{command}`: {error}"));
+                Ok(())
+            }
+        }
     }
 }
 
@@ -220,6 +364,7 @@ pub fn filtered_items<'a>(items: &'a [PortUsage], filter: &str, sort: SortKey) -
 
     match sort {
         SortKey::Port => items.sort_by_key(|usage| usage.port),
+        SortKey::Bind => items.sort_by(|a, b| a.bind_label().cmp(&b.bind_label())),
         SortKey::Process => items.sort_by(|a, b| a.process_label().cmp(b.process_label())),
         SortKey::Pid => items.sort_by_key(|usage| usage.pid),
     }

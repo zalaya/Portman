@@ -1,6 +1,7 @@
 mod confirm;
 mod details;
 mod footer;
+mod open_prompt;
 mod panel;
 mod search;
 mod table;
@@ -16,10 +17,12 @@ const LIST_HINTS: &[(&str, &str)] = &[
     ("type", "search"),
     ("tab", "sort"),
     ("→", "details"),
-    ("enter", "kill"),
+    ("del", "kill"),
+    ("ctrl+o", "open port"),
     ("ctrl+r", "refresh"),
     ("esc", "quit"),
 ];
+
 const DETAILS_HINTS: &[(&str, &str)] = &[("←", "back"), ("ctrl+r", "refresh"), ("ctrl+c", "quit")];
 
 pub fn draw(frame: &mut Frame, app: &mut App) {
@@ -47,5 +50,9 @@ pub fn draw(frame: &mut Frame, app: &mut App) {
 
     if let Some(target) = &app.kill_target {
         confirm::render(frame, frame.area(), target);
+    }
+
+    if let Some(prompt) = &app.open_prompt {
+        open_prompt::render(frame, frame.area(), prompt);
     }
 }

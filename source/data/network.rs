@@ -18,11 +18,11 @@ pub fn scan() -> Result<Vec<Listener>> {
 fn as_listener(socket: SocketInfo) -> Option<Listener> {
     let pid = *socket.associated_pids.first()?;
 
-    let (port, protocol) = match socket.protocol_socket_info {
-        ProtocolSocketInfo::Tcp(tcp) if tcp.state == TcpState::Listen => (tcp.local_port, Protocol::Tcp),
-        ProtocolSocketInfo::Udp(udp) => (udp.local_port, Protocol::Udp),
+    let (port, protocol, local_addr) = match socket.protocol_socket_info {
+        ProtocolSocketInfo::Tcp(tcp) if tcp.state == TcpState::Listen => (tcp.local_port, Protocol::Tcp, tcp.local_addr),
+        ProtocolSocketInfo::Udp(udp) => (udp.local_port, Protocol::Udp, udp.local_addr),
         _ => return None,
     };
 
-    Some(Listener { port, protocol, pid })
+    Some(Listener { port, protocol, pid, local_addr })
 }
