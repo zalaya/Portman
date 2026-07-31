@@ -1,27 +1,14 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
+use arboard::Clipboard;
 use ratatui::widgets::TableState;
 
-use crate::data::network::Protocol;
-use crate::data::{ network, opener, port_usage::PortUsage, process, process::ProcessTable };
+use crate::data::{ network, port_usage::PortUsage, process, process::ProcessSummary, process::ProcessTable };
 
 pub struct KillTarget {
     pub pid: u32,
     pub label: String,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum OpenField {
-    Port,
-    Command,
-}
-
-pub struct OpenPrompt {
-    pub port_input: String,
-    pub protocol: Protocol,
-    pub command: String,
-    pub focus: OpenField,
 }
 
 pub struct Details {
@@ -29,6 +16,46 @@ pub struct Details {
     pub bind: String,
     pub exposed: bool,
     pub process: process::ProcessDetails,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Action {
+    Kill,
+    ViewTree,
+    CopyName,
+    CopyPid,
+    CopyAddress,
+    CopyExecutable,
+    CopyWorkingDir,
+    Refresh,
+}
+
+impl Action {
+    pub fn label(self) -> &'static str {
+        match self {
+            Action::Kill => "Kill process",
+            Action::ViewTree => "View related processes",
+            Action::CopyName => "Copy process name",
+            Action::CopyPid => "Copy PID",
+            Action::CopyAddress => "Copy address",
+            Action::CopyExecutable => "Copy executable path",
+            Action::CopyWorkingDir => "Copy working directory",
+            Action::Refresh => "Refresh list",
+        }
+    }
+}
+
+pub struct ActionMenu {
+    pub label: String,
+    pub actions: Vec<Action>,
+    pub selected: usize,
+}
+
+pub struct InfoPanel {
+    pub title: String,
+    pub parent: Option<ProcessSummary>,
+    pub current: ProcessSummary,
+    pub children: Vec<ProcessSummary>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -65,11 +92,12 @@ pub struct App {
     pub sort: SortKey,
     pub state: TableState,
     pub kill_target: Option<KillTarget>,
+    pub action_menu: Option<ActionMenu>,
+    pub info_panel: Option<InfoPanel>,
     pub details: Option<Details>,
     pub status: Option<String>,
     pub new_keys: HashSet<(String, u32)>,
     seen_keys: Option<HashSet<(String, u32)>>,
-    pub open_prompt: Option<OpenPrompt>,
 }
 
 impl App {
@@ -80,11 +108,12 @@ impl App {
             sort: SortKey::Port,
             state: TableState::default(),
             kill_target: None,
+            action_menu: None,
+            info_panel: None,
             details: None,
             status: None,
             new_keys: HashSet::new(),
             seen_keys: None,
-            open_prompt: None,
         };
 
         app.refresh()?;
@@ -110,15 +139,6 @@ impl App {
         
         self.seen_keys = Some(current_keys);
         self.select(previous_pid);
-
-        if let Some(details) = &self.details {
-            self.details = process::details(details.process.pid).map(|process| Details {
-                address: details.address.clone(),
-                bind: details.bind.clone(),
-                exposed: details.exposed,
-                process,
-            });
-        }
 
         Ok(())
     }
@@ -147,12 +167,13 @@ impl App {
 
         if filtered.is_empty() {
             self.state.select(None);
-            return;
+        } else {
+            let index = pid.and_then(|pid| filtered.iter().position(|usage| usage.pid == pid)).unwrap_or(0);
+
+            self.state.select(Some(index));
         }
 
-        let index = pid.and_then(|pid| filtered.iter().position(|usage| usage.pid == pid)).unwrap_or(0);
-
-        self.state.select(Some(index));
+        self.refresh_details();
     }
 
     pub fn next(&mut self) {
@@ -168,6 +189,7 @@ impl App {
         };
 
         self.state.select(Some(next));
+        self.refresh_details();
     }
 
     pub fn previous(&mut self) {
@@ -183,10 +205,21 @@ impl App {
         };
 
         self.state.select(Some(previous));
+        self.refresh_details();
     }
 
     fn selected_usage(&self) -> Option<&PortUsage> {
         self.filtered().into_iter().nth(self.state.selected().unwrap_or(usize::MAX))
+    }
+
+    fn refresh_details(&mut self) {
+        let selected = self
+            .selected_usage()
+            .map(|usage| (usage.pid, usage.address(), usage.bind_description(), usage.is_exposed()));
+
+        self.details = selected.and_then(|(pid, address, bind, exposed)| {
+            process::details(pid).map(|process| Details { address, bind, exposed, process })
+        });
     }
 
     pub fn request_kill(&mut self) {
@@ -195,7 +228,7 @@ impl App {
         };
 
         if usage.pid == std::process::id() {
-            self.status = Some("That's portman itself (a port you opened) — can't kill it from here".to_string());
+            self.status = Some("That's portman itself — can't kill it from here".to_string());
             return;
         }
 
@@ -222,134 +255,109 @@ impl App {
         self.refresh()
     }
 
-    pub fn open_details(&mut self) {
+    pub fn open_action_menu(&mut self) {
         let Some(usage) = self.selected_usage() else {
             return;
         };
 
-        let address = usage.address();
-        let bind = usage.bind_label();
-        let exposed = usage.is_exposed();
+        let label = format!("{} ({})", usage.process_label(), usage.address());
 
-        self.details = process::details(usage.pid).map(|process| Details { address, bind, exposed, process });
+        let mut actions = vec![Action::Kill, Action::ViewTree, Action::CopyName, Action::CopyAddress, Action::CopyPid];
+
+        if let Some(details) = &self.details {
+            if details.process.exe.is_some() {
+                actions.push(Action::CopyExecutable);
+            }
+
+            if details.process.cwd.is_some() {
+                actions.push(Action::CopyWorkingDir);
+            }
+        }
+
+        actions.push(Action::Refresh);
+
+        self.action_menu = Some(ActionMenu { label, actions, selected: 0 });
     }
 
-    pub fn close_details(&mut self) {
-        self.details = None;
+    pub fn close_action_menu(&mut self) {
+        self.action_menu = None;
     }
 
-    pub fn start_open_prompt(&mut self) {
-        self.open_prompt = Some(OpenPrompt {
-            port_input: String::new(),
-            protocol: Protocol::Tcp,
-            command: String::new(),
-            focus: OpenField::Port,
-        });
-    }
-
-    pub fn cancel_open_prompt(&mut self) {
-        self.open_prompt = None;
-    }
-
-    pub fn toggle_open_focus(&mut self) {
-        if let Some(prompt) = &mut self.open_prompt {
-            prompt.focus = match prompt.focus {
-                OpenField::Port => OpenField::Command,
-                OpenField::Command => OpenField::Port,
-            };
+    pub fn action_menu_next(&mut self) {
+        if let Some(menu) = &mut self.action_menu {
+            menu.selected = (menu.selected + 1) % menu.actions.len();
         }
     }
 
-    pub fn toggle_open_protocol(&mut self) {
-        if let Some(prompt) = &mut self.open_prompt {
-            prompt.protocol = match prompt.protocol {
-                Protocol::Tcp => Protocol::Udp,
-                Protocol::Udp => Protocol::Tcp,
-            };
+    pub fn action_menu_previous(&mut self) {
+        if let Some(menu) = &mut self.action_menu {
+            menu.selected = (menu.selected + menu.actions.len() - 1) % menu.actions.len();
         }
     }
 
-    pub fn push_open_char(&mut self, character: char) {
-        let Some(prompt) = &mut self.open_prompt else {
-            return;
-        };
-
-        match prompt.focus {
-            OpenField::Port if character.is_ascii_digit() => {
-                if prompt.port_input.len() < 5 {
-                    prompt.port_input.push(character);
-                }
-            }
-            // Anything that isn't a port digit means the user has moved on to typing
-            // the command — jump focus there instead of silently dropping the key.
-            OpenField::Port => {
-                prompt.focus = OpenField::Command;
-                prompt.command.push(character);
-            }
-            OpenField::Command => prompt.command.push(character),
-        }
-    }
-
-    pub fn pop_open_char(&mut self) {
-        let Some(prompt) = &mut self.open_prompt else {
-            return;
-        };
-
-        match prompt.focus {
-            OpenField::Port => {
-                prompt.port_input.pop();
-            }
-            OpenField::Command => {
-                prompt.command.pop();
-            }
-        }
-    }
-
-    pub fn confirm_open(&mut self) -> Result<()> {
-        let Some(prompt) = self.open_prompt.take() else {
+    pub fn confirm_action_menu(&mut self) -> Result<()> {
+        let Some(menu) = self.action_menu.take() else {
             return Ok(());
         };
 
-        let port = match prompt.port_input.parse::<u16>() {
-            Ok(port) if port > 0 => port,
-            _ => {
-                self.status = Some("Enter a port between 1 and 65535".to_string());
-                return Ok(());
-            }
-        };
-
-        let socket = match opener::open(port, prompt.protocol) {
-            Ok(socket) => socket,
-            Err(error) => {
-                self.status = Some(format!("Could not open {port}/{}: {error}", prompt.protocol));
-                return Ok(());
-            }
-        };
-
-        let command = prompt.command.trim();
-
-        if command.is_empty() {
-            drop(socket);
-            self.status = Some("Enter a command to run on that port".to_string());
+        let Some(action) = menu.actions.get(menu.selected).copied() else {
             return Ok(());
+        };
+
+        match action {
+            Action::Kill => {
+                self.request_kill();
+                return Ok(());
+            }
+            Action::ViewTree => {
+                self.show_process_tree();
+                return Ok(());
+            }
+            Action::Refresh => return self.refresh(),
+            _ => {}
         }
 
-        // Release the port ourselves so the launched command can bind it.
-        drop(socket);
+        let value = match action {
+            Action::CopyName => self.selected_usage().map(|usage| usage.process_label().to_string()),
+            Action::CopyPid => self.selected_usage().map(|usage| usage.pid.to_string()),
+            Action::CopyAddress => self.selected_usage().map(|usage| usage.address()),
+            Action::CopyExecutable => self.details.as_ref().and_then(|details| details.process.exe.clone()),
+            Action::CopyWorkingDir => self.details.as_ref().and_then(|details| details.process.cwd.clone()),
+            Action::Kill | Action::ViewTree | Action::Refresh => unreachable!(),
+        };
 
-        let mut parts = command.split_whitespace();
-        let program = parts.next().expect("command is non-empty after trim");
+        self.copy_to_clipboard(action.label(), value);
 
-        match std::process::Command::new(program).args(parts).spawn() {
-            Ok(_) => {
-                self.status = Some(format!("Launched `{command}`"));
-                self.refresh()
-            }
-            Err(error) => {
-                self.status = Some(format!("Could not launch `{command}`: {error}"));
-                Ok(())
-            }
+        Ok(())
+    }
+
+    fn copy_to_clipboard(&mut self, label: &str, value: Option<String>) {
+        let Some(value) = value else {
+            self.status = Some(format!("Nothing to copy for \"{label}\""));
+            return;
+        };
+
+        match Clipboard::new().and_then(|mut clipboard| clipboard.set_text(value.clone())) {
+            Ok(()) => self.status = Some(format!("Copied: {value}")),
+            Err(error) => self.status = Some(format!("Could not copy to clipboard: {error}")),
         }
+    }
+
+    fn show_process_tree(&mut self) {
+        let Some(usage) = self.selected_usage() else {
+            return;
+        };
+
+        let pid = usage.pid;
+        let title = format!("Related processes — {}", usage.process_label());
+        let current = ProcessSummary { pid, name: usage.process_label().to_string() };
+        let relatives = process::relatives(pid);
+
+        self.info_panel = Some(InfoPanel { title, parent: relatives.parent, current, children: relatives.children });
+    }
+
+    pub fn close_info_panel(&mut self) {
+        self.info_panel = None;
     }
 }
 

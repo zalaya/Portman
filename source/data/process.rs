@@ -39,6 +39,41 @@ pub struct ProcessDetails {
     pub cmd: Vec<String>,
 }
 
+pub struct ProcessSummary {
+    pub pid: u32,
+    pub name: String,
+}
+
+pub struct ProcessRelatives {
+    pub parent: Option<ProcessSummary>,
+    pub children: Vec<ProcessSummary>,
+}
+
+pub fn relatives(pid: u32) -> ProcessRelatives {
+    let mut system = System::new();
+
+    system.refresh_processes(ProcessesToUpdate::All, true);
+
+    let sysinfo_pid = Pid::from_u32(pid);
+
+    let parent = system
+        .process(sysinfo_pid)
+        .and_then(|process| process.parent())
+        .and_then(|parent_pid| system.process(parent_pid))
+        .map(|process| ProcessSummary { pid: process.pid().as_u32(), name: process.name().to_string_lossy().into_owned() });
+
+    let mut children: Vec<ProcessSummary> = system
+        .processes()
+        .values()
+        .filter(|process| process.parent() == Some(sysinfo_pid))
+        .map(|process| ProcessSummary { pid: process.pid().as_u32(), name: process.name().to_string_lossy().into_owned() })
+        .collect();
+
+    children.sort_by_key(|child| child.pid);
+
+    ProcessRelatives { parent, children }
+}
+
 pub fn details(pid: u32) -> Option<ProcessDetails> {
     let mut system = System::new();
     let sysinfo_pid = Pid::from_u32(pid);

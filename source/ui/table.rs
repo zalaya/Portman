@@ -2,7 +2,7 @@ use ratatui::Frame;
 use ratatui::layout::{ Alignment, Constraint, Rect };
 use ratatui::style::{ Color, Modifier, Style };
 use ratatui::text::Line;
-use ratatui::widgets::{ Block, BorderType, Borders, Cell, Padding, Row, Table };
+use ratatui::widgets::{ Block, Borders, Cell, Padding, Row, Table };
 
 use super::theme;
 use crate::app::{ self, App, SortKey };
@@ -13,12 +13,12 @@ pub fn render(frame: &mut Frame, area: Rect, app: &mut App) {
         .into_iter()
         .map(|usage| row_for(usage, app.new_keys.contains(&(usage.address(), usage.pid))))
         .collect::<Vec<_>>();
-    let widths = [Constraint::Length(14), Constraint::Length(12), Constraint::Min(20), Constraint::Length(8)];
+    let widths = [Constraint::Length(11), Constraint::Length(15), Constraint::Min(20), Constraint::Length(8)];
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(theme::MUTED))
+        .title(Line::from(" Ports ").alignment(Alignment::Left))
         .title(Line::from(format!(" sort: {} ", app.sort.label())).alignment(Alignment::Right))
         .padding(Padding::horizontal(1));
 
@@ -46,7 +46,7 @@ fn row_for(usage: &PortUsage, is_new: bool) -> Row<'_> {
     let style = if usage.process_name.is_none() {
         Style::default().fg(theme::MUTED).add_modifier(Modifier::ITALIC)
     } else if is_new {
-        Style::default().fg(theme::SECONDARY).add_modifier(Modifier::BOLD)
+        Style::default().fg(theme::SUCCESS).add_modifier(Modifier::BOLD)
     } else {
         Style::default()
     };

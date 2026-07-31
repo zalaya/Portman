@@ -1,28 +1,31 @@
 use ratatui::Frame;
-use ratatui::layout::Rect;
+use ratatui::layout::{ Alignment, Rect };
 use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
-use ratatui::widgets::{ Block, BorderType, Borders, Padding, Paragraph, Wrap };
+use ratatui::widgets::{ Block, Borders, Padding, Paragraph, Wrap };
 
-use super::{ panel, theme };
+use super::theme;
 use crate::app::Details;
 
-pub fn render_breadcrumb(frame: &mut Frame, area: Rect, details: &Details) {
-    let text = Line::from(vec![
-        Span::styled("← ", Style::default().fg(theme::MUTED)),
-        Span::styled(&details.process.name, Style::default().fg(theme::PRIMARY).add_modifier(Modifier::BOLD)),
-        Span::raw(" "),
-        Span::styled(format!("({})", details.address), Style::default().fg(theme::MUTED)),
-    ]);
+pub fn render(frame: &mut Frame, area: Rect, details: Option<&Details>) {
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(theme::MUTED))
+        .title(Line::from(" Details ").alignment(Alignment::Left))
+        .padding(Padding::horizontal(1));
 
-    panel::single_line(frame, area, text, theme::MUTED);
-}
+    let Some(details) = details else {
+        let text = Line::from(Span::styled("No process selected", Style::default().fg(theme::MUTED)));
 
-pub fn render(frame: &mut Frame, area: Rect, details: &Details) {
+        frame.render_widget(Paragraph::new(text).block(block), area);
+        return;
+    };
+
     let process = &details.process;
     let bind_color = if details.exposed { theme::DANGER } else { theme::MUTED };
 
     let mut lines = vec![
+        row("Process", process.name.clone()),
         row("Address", details.address.clone()),
         row_styled("Bind", details.bind.clone(), bind_color),
         row("PID", process.pid.to_string()),
@@ -50,12 +53,6 @@ pub fn render(frame: &mut Frame, area: Rect, details: &Details) {
     if !process.cmd.is_empty() {
         lines.push(row("Command", process.cmd.join(" ")));
     }
-
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(theme::MUTED))
-        .padding(Padding::horizontal(1));
 
     frame.render_widget(Paragraph::new(lines).block(block).wrap(Wrap { trim: false }), area);
 }

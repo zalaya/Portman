@@ -27,15 +27,26 @@ impl PortUsage {
         self.process_name.as_deref().unwrap_or("(exited?)")
     }
 
-    /// Short label for how reachable this socket is: `local` (loopback only),
-    /// `any` (bound to every interface), or the specific bound IP.
+    /// Short label for how reachable this socket is: loopback-only, every
+    /// interface, or the specific bound IP.
     pub fn bind_label(&self) -> String {
         if self.local_addr.is_loopback() {
-            "local".to_string()
+            "Localhost".to_string()
         } else if self.local_addr.is_unspecified() {
-            "any".to_string()
+            "Public".to_string()
         } else {
             self.local_addr.to_string()
+        }
+    }
+
+    /// Longer, human-readable explanation of the same thing, for the details panel.
+    pub fn bind_description(&self) -> String {
+        if self.local_addr.is_loopback() {
+            format!("Localhost only ({}) — not reachable from the network", self.local_addr)
+        } else if self.local_addr.is_unspecified() {
+            format!("Public ({}) — reachable from the network", self.local_addr)
+        } else {
+            format!("Specific interface ({}) — reachable from that network", self.local_addr)
         }
     }
 

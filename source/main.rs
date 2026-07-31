@@ -36,7 +36,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
         terminal.draw(|frame| ui::draw(frame, app))?;
 
         if !event::poll(REFRESH_INTERVAL)? {
-            if app.kill_target.is_none() && app.open_prompt.is_none() {
+            if app.kill_target.is_none() {
                 app.refresh()?;
             }
 
@@ -63,14 +63,21 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
             continue;
         }
 
-        if app.open_prompt.is_some() {
+        if app.info_panel.is_some() {
             match key.code {
-                KeyCode::Enter => app.confirm_open()?,
-                KeyCode::Esc => app.cancel_open_prompt(),
-                KeyCode::Tab => app.toggle_open_focus(),
-                KeyCode::Left | KeyCode::Right => app.toggle_open_protocol(),
-                KeyCode::Backspace => app.pop_open_char(),
-                KeyCode::Char(character) => app.push_open_char(character),
+                KeyCode::Enter | KeyCode::Esc => app.close_info_panel(),
+                _ => {}
+            }
+
+            continue;
+        }
+
+        if app.action_menu.is_some() {
+            match key.code {
+                KeyCode::Up => app.action_menu_previous(),
+                KeyCode::Down => app.action_menu_next(),
+                KeyCode::Enter => app.confirm_action_menu()?,
+                KeyCode::Esc => app.close_action_menu(),
                 _ => {}
             }
 
@@ -86,25 +93,11 @@ fn run(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> Resu
             continue;
         }
 
-        if key.code == KeyCode::Char('o') && key.modifiers.contains(KeyModifiers::CONTROL) {
-            app.start_open_prompt();
-            continue;
-        }
-
-        if app.details.is_some() {
-            match key.code {
-                KeyCode::Left | KeyCode::Esc => app.close_details(),
-                _ => {}
-            }
-
-            continue;
-        }
-
         match key.code {
             KeyCode::Esc => return Ok(()),
             KeyCode::Down => app.next(),
             KeyCode::Up => app.previous(),
-            KeyCode::Right => app.open_details(),
+            KeyCode::Enter => app.open_action_menu(),
             KeyCode::Delete => app.request_kill(),
             KeyCode::Tab => app.cycle_sort(),
             KeyCode::Backspace => app.pop_filter_char(),

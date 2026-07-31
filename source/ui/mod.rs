@@ -1,9 +1,10 @@
+mod action_menu;
 mod confirm;
 mod details;
-mod footer;
-mod open_prompt;
+mod info_panel;
 mod panel;
 mod search;
+mod status;
 mod table;
 mod theme;
 
@@ -12,47 +13,42 @@ use ratatui::layout::{ Constraint, Direction, Layout };
 
 use crate::app::App;
 
-const LIST_HINTS: &[(&str, &str)] = &[
-    ("↑/↓", "move"),
-    ("type", "search"),
-    ("tab", "sort"),
-    ("→", "details"),
-    ("del", "kill"),
-    ("ctrl+o", "open port"),
-    ("ctrl+r", "refresh"),
-    ("esc", "quit"),
-];
-
-const DETAILS_HINTS: &[(&str, &str)] = &[("←", "back"), ("ctrl+r", "refresh"), ("ctrl+c", "quit")];
-
 pub fn draw(frame: &mut Frame, app: &mut App) {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(3)])
-        .split(frame.area());
+    let has_status = app.status.is_some();
 
-    match &app.details {
-        Some(details) => {
-            details::render_breadcrumb(frame, chunks[0], details);
-            details::render(frame, chunks[1], details);
-        }
-        None => {
-            search::render(frame, chunks[0], &app.filter);
-            table::render(frame, chunks[1], app);
-        }
+    let constraints = if has_status {
+        vec![Constraint::Length(3), Constraint::Length(3), Constraint::Min(0)]
+    } else {
+        vec![Constraint::Length(3), Constraint::Min(0)]
+    };
+
+    let chunks = Layout::default().direction(Direction::Vertical).constraints(constraints).split(frame.area());
+
+    search::render(frame, chunks[0], &app.filter);
+
+    if has_status {
+        status::render(frame, chunks[1], app.status.as_deref().unwrap());
     }
 
-    match &app.status {
-        Some(message) => footer::render_status(frame, chunks[2], message),
-        None if app.details.is_some() => footer::render(frame, chunks[2], DETAILS_HINTS),
-        None => footer::render(frame, chunks[2], LIST_HINTS),
+    let content_area = chunks[chunks.len() - 1];
+
+    let columns = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
+        .split(content_area);
+
+    table::render(frame, columns[0], app);
+    details::render(frame, columns[1], app.details.as_ref());
+
+    if let Some(menu) = &app.action_menu {
+        action_menu::render(frame, frame.area(), menu);
+    }
+
+    if let Some(info) = &app.info_panel {
+        info_panel::render(frame, frame.area(), info);
     }
 
     if let Some(target) = &app.kill_target {
         confirm::render(frame, frame.area(), target);
-    }
-
-    if let Some(prompt) = &app.open_prompt {
-        open_prompt::render(frame, frame.area(), prompt);
     }
 }

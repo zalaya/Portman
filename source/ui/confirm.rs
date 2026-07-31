@@ -2,7 +2,7 @@ use ratatui::Frame;
 use ratatui::layout::{ Alignment, Rect };
 use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
-use ratatui::widgets::{ Block, BorderType, Borders, Clear, Padding, Paragraph };
+use ratatui::widgets::{ Block, Borders, Clear, Padding, Paragraph };
 
 use super::{ panel, theme };
 use crate::app::KillTarget;
@@ -27,7 +27,6 @@ pub fn render(frame: &mut Frame, area: Rect, target: &KillTarget) {
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .border_type(BorderType::Thick)
         .border_style(Style::default().fg(theme::DANGER))
         .title(Line::from(" ⚠ Confirm ").alignment(Alignment::Center))
         .title_style(Style::default().fg(theme::DANGER).add_modifier(Modifier::BOLD))
