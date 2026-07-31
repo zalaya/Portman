@@ -1,6 +1,7 @@
+use std::hint::black_box;
 use std::net::IpAddr;
 
-use criterion::{ BenchmarkId, Criterion, black_box, criterion_group, criterion_main };
+use criterion::{ BenchmarkId, Criterion, criterion_group, criterion_main };
 use portman::app::{ SortKey, filtered_items };
 use portman::data::network::Protocol;
 use portman::data::port::PortUsage;
