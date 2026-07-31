@@ -2,7 +2,7 @@
 name = "portman"
 version = "0.1.0"
 edition = "2024"
-description = "Know what's running on your machine."
+description = "A fast, keyboard-driven TUI for seeing what's listening on your machine's ports — and shutting it down."
 license = "MIT"
 repository = "https://github.com/zalaya/Portman"
 readme = "README.md"
