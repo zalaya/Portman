@@ -9,7 +9,19 @@ Every port is scored by how reachable it is — 🟢 Safe (loopback only), 🟡 
 
 ## Install
 
-Download a binary from the [Releases page](https://github.com/zalaya/Portman/releases), or build from source:
+macOS or Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zalaya/Portman/main/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/zalaya/Portman/main/install.ps1 | iex
+```
+
+No Rust toolchain needed either way. Want a specific version, or to build from source instead?
 
 ```bash
 git clone https://github.com/zalaya/Portman.git
@@ -17,26 +29,7 @@ cd Portman
 cargo install --path .
 ```
 
-## Usage
-
-```bash
-portman
-```
-
-| Key         | Action                                          |
-| ----------- | ------------------------------------------------ |
-| `↑` / `↓`   | Move selection                                   |
-| type        | Search by port, bind, process or PID             |
-| `Tab`       | Cycle sort key (port, bind, process, PID, risk)  |
-| `Enter`     | Open the actions menu (kill, copy PID/address)   |
-| `Delete`    | Kill the selected process                        |
-| `Ctrl+T`    | Cycle the color theme                            |
-| `Ctrl+L`    | Toggle the activity log                          |
-| `Ctrl+R`    | Refresh now                                      |
-| `Ctrl+K`    | Toggle the keybindings help                      |
-| `Esc`       | Quit, or close whatever's open                    |
-
-Killing a process you don't own usually needs `sudo`.
+Run it with `portman` — press `Ctrl+K` for keybindings.
 
 ## Development
 
