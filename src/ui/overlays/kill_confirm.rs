@@ -5,7 +5,7 @@ use ratatui::text::{ Line, Span };
 
 use crate::app::KillTarget;
 use crate::data::process::KillSignal;
-use crate::theme;
+use crate::ui::theme;
 use crate::ui::widgets::popup::Popup;
 
 pub fn render(frame: &mut Frame, area: Rect, target: &KillTarget) {

@@ -4,7 +4,7 @@ use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
 
 use crate::app::ActionMenu;
-use crate::theme;
+use crate::ui::theme;
 use crate::ui::widgets::popup::Popup;
 
 pub fn render(frame: &mut Frame, area: Rect, menu: &ActionMenu) {

@@ -1,6 +1,7 @@
 mod chrome;
 mod overlays;
 mod panes;
+mod theme;
 mod widgets;
 
 use ratatui::Frame;

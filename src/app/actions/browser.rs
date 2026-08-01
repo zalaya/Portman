@@ -1,8 +1,8 @@
 use std::net::IpAddr;
 
 use crate::app::App;
-use crate::browser;
 use crate::data::port::PortUsage;
+use crate::system::browser;
 
 impl App {
     pub(super) fn open_selected_in_browser(&mut self) {

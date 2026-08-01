@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::clipboard;
+use crate::system::clipboard;
 
 impl App {
     pub(super) fn copy_to_clipboard(&mut self, label: &str, value: Option<String>) {

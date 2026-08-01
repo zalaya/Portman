@@ -6,7 +6,7 @@ use ratatui::widgets::{ Block, Borders, Padding, Paragraph, Wrap };
 
 use crate::app::Details;
 use crate::data::port::Risk;
-use crate::theme;
+use crate::ui::theme;
 
 pub fn render(frame: &mut Frame, area: Rect, details: Option<&Details>) {
     let block = Block::default()

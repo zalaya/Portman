@@ -3,7 +3,7 @@ mod support;
 use crossterm::event::{ KeyCode, KeyEvent, KeyModifiers };
 use portman::app::App;
 use portman::data::process::KillSignal;
-use portman::input::{ Flow, handle_key };
+use portman::terminal::input::{ Flow, handle_key };
 
 fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)

@@ -6,7 +6,7 @@ use ratatui::widgets::{ Block, Borders, Padding, Paragraph };
 
 use crate::app::App;
 use crate::data::port::Risk;
-use crate::theme;
+use crate::ui::theme;
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let total = app.items.len();

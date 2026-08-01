@@ -6,8 +6,8 @@ use crossterm::event::{ self, Event, KeyEventKind };
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
+use super::input::{ self, Flow };
 use crate::app::App;
-use crate::input::{ self, Flow };
 use crate::ui;
 
 const REFRESH_INTERVAL: Duration = Duration::from_secs(2);

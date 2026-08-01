@@ -6,7 +6,7 @@ use ratatui::widgets::{ Block, Borders, Cell, Padding, Row, Table };
 
 use crate::app::{ self, App, SortKey };
 use crate::data::port::{ PortUsage, Risk };
-use crate::theme;
+use crate::ui::theme;
 
 pub fn render(frame: &mut Frame, area: Rect, app: &mut App) {
     let rows = app::filtered_items(&app.items, &app.filter, app.sort)

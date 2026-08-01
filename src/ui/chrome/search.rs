@@ -4,7 +4,7 @@ use ratatui::style::Style;
 use ratatui::text::{ Line, Span };
 
 use crate::app::App;
-use crate::theme;
+use crate::ui::theme;
 use crate::ui::widgets::panel;
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {

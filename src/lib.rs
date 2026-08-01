@@ -1,9 +1,6 @@
 pub mod app;
-pub mod browser;
 pub mod cli;
-pub mod clipboard;
 pub mod data;
-pub mod input;
-pub mod runtime;
-pub mod theme;
+pub mod system;
+pub mod terminal;
 mod ui;

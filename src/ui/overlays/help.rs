@@ -3,7 +3,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
 
-use crate::theme;
+use crate::ui::theme;
 use crate::ui::widgets::popup::Popup;
 
 const BINDINGS: &[(&str, &str)] = &[

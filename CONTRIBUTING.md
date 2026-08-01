@@ -12,10 +12,10 @@ cargo run
 
 - `src/data/` — talks to the OS: port scan, process lookups.
 - `src/app/` — application state, one file per concern.
-- `src/input.rs` — key press → `App` mutation, no I/O.
-- `src/runtime.rs` — the terminal event loop.
-- `src/cli.rs` — argument parsing and the non-interactive `--json`/`check` modes.
-- `src/ui/` — rendering only: `chrome/`, `panes/`, `overlays/`, `widgets/`.
+- `src/terminal/` — `input.rs` (key press → `App` mutation, no I/O) and `event_loop.rs` (the actual terminal loop).
+- `src/cli/` — non-interactive mode: `args.rs` (parsing), `report.rs` (what to report), `commands.rs` (`--json`/`check`).
+- `src/system/` — thin wrappers around OS facilities: `clipboard.rs`, `browser.rs`.
+- `src/ui/` — rendering only: `chrome/`, `panes/`, `overlays/`, `widgets/`, `theme.rs`.
 - `tests/` — integration tests, fixtures in `tests/support/`.
 - `benches/` — `criterion` benchmark for the search/sort hot path.
 
