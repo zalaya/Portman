@@ -1,6 +1,6 @@
 mod actions;
 mod activity;
-mod chrome;
+mod help;
 mod kill;
 mod listing;
 mod selection;
@@ -10,9 +10,8 @@ use std::collections::{ HashSet, VecDeque };
 use anyhow::Result;
 use ratatui::widgets::TableState;
 
-use crate::data::network;
+use crate::data;
 use crate::data::port::PortUsage;
-use crate::data::process::ProcessTable;
 
 pub use actions::{ Action, ActionMenu };
 pub use activity::Event;
@@ -65,12 +64,8 @@ impl App {
         let previous_pid = self.selected_usage().map(|usage| usage.pid);
         let previous_items = std::mem::take(&mut self.items);
         let previous_keys = self.seen_keys.clone();
-        let processes = ProcessTable::snapshot();
 
-        self.items = network::scan()?
-            .into_iter()
-            .map(|listener| PortUsage::resolve(&processes, listener))
-            .collect();
+        self.items = data::scan_ports()?;
 
         let current_keys: HashSet<ListenerKey> = self.items.iter().map(listener_key).collect();
 

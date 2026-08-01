@@ -12,7 +12,6 @@ const BINDINGS: &[(&str, &str)] = &[
     ("Tab", "Cycle sort key (add Risk to the rotation)"),
     ("Enter", "Open the actions menu"),
     ("Delete", "Kill the selected process"),
-    ("Ctrl+T", "Cycle the color theme"),
     ("Ctrl+L", "Toggle the activity log"),
     ("Ctrl+R", "Refresh now"),
     ("Ctrl+K", "Toggle this help"),

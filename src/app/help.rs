@@ -1,11 +1,6 @@
 use crate::app::App;
-use crate::theme;
 
 impl App {
-    pub fn cycle_theme(&mut self) {
-        theme::cycle();
-    }
-
     pub fn toggle_help(&mut self) {
         self.show_help = !self.show_help;
     }

@@ -1,14 +1,38 @@
 use std::io::stdout;
+use std::process::ExitCode;
 
 use anyhow::Result;
 use crossterm::execute;
 use crossterm::terminal::{ EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode };
 use portman::app::App;
+use portman::cli::{ self, Command };
 use portman::runtime;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
-fn main() -> Result<()> {
+fn main() -> Result<ExitCode> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+
+    match cli::parse_args(&args) {
+        Err(error) => {
+            eprintln!("{error}");
+            return Ok(ExitCode::from(2));
+        }
+        Ok(Command::Help) => {
+            println!("{}", cli::USAGE);
+            return Ok(ExitCode::SUCCESS);
+        }
+        Ok(Command::Scan { json }) => {
+            cli::run_scan(json)?;
+            return Ok(ExitCode::SUCCESS);
+        }
+        Ok(Command::Check { json }) => {
+            let ok = cli::run_check(json)?;
+            return Ok(if ok { ExitCode::SUCCESS } else { ExitCode::FAILURE });
+        }
+        Ok(Command::Interactive) => {}
+    }
+
     enable_raw_mode()?;
     execute!(stdout(), EnterAlternateScreen)?;
 
@@ -21,5 +45,7 @@ fn main() -> Result<()> {
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
-    result
+    result?;
+
+    Ok(ExitCode::SUCCESS)
 }

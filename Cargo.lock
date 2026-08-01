@@ -1526,6 +1526,8 @@ dependencies = [
  "crossterm",
  "netstat2",
  "ratatui",
+ "serde",
+ "serde_json",
  "sysinfo",
 ]
 

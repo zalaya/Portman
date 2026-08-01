@@ -40,11 +40,11 @@ impl PortUsage {
 
     pub fn bind_description(&self) -> String {
         if self.local_addr.is_loopback() {
-            format!("Localhost only ({}) — not reachable from the network", self.local_addr)
+            format!("Localhost only ({}) — Not reachable from the network", self.local_addr)
         } else if self.local_addr.is_unspecified() {
-            format!("Public ({}) — reachable from the network", self.local_addr)
+            format!("Public ({}) — Reachable from the network", self.local_addr)
         } else {
-            format!("Specific interface ({}) — reachable from that network", self.local_addr)
+            format!("Specific interface ({}) — Reachable from that network", self.local_addr)
         }
     }
 

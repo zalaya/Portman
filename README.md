@@ -31,6 +31,22 @@ cargo install --path .
 
 Run it with `portman` — press `Ctrl+K` for keybindings.
 
+If you downloaded the archive manually from the Releases page instead of using `install.sh`, macOS may refuse to open it ("cannot be verified") since it isn't signed with an Apple Developer ID. Either right-click it and choose Open, or run:
+
+```bash
+xattr -d com.apple.quarantine portman
+```
+
+## Scripting
+
+Portman isn't only interactive:
+
+```bash
+portman --json           # Dump the current scan as JSON.
+portman check            # Exit 1 if a Critical port is exposed — for CI/cron.
+portman check --json     # Same, machine-readable.
+```
+
 ## Development
 
 ```bash

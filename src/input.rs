@@ -2,6 +2,7 @@ use anyhow::Result;
 use crossterm::event::{ KeyCode, KeyEvent, KeyModifiers };
 
 use crate::app::App;
+use crate::data::process::KillSignal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Flow {
@@ -76,10 +77,6 @@ fn handle_shortcut(app: &mut App, code: KeyCode) -> Result<Option<Flow>> {
             app.refresh()?;
             Flow::Continue
         }
-        KeyCode::Char('t') => {
-            app.cycle_theme();
-            Flow::Continue
-        }
         KeyCode::Char('l') => {
             app.toggle_activity();
             Flow::Continue
@@ -100,7 +97,7 @@ fn handle_list_navigation(app: &mut App, code: KeyCode) -> Flow {
         KeyCode::Down => app.next(),
         KeyCode::Up => app.previous(),
         KeyCode::Enter => app.open_action_menu(),
-        KeyCode::Delete => app.request_kill(),
+        KeyCode::Delete => app.request_kill(KillSignal::Force),
         KeyCode::Tab => app.cycle_sort(),
         KeyCode::Backspace => app.pop_filter_char(),
         KeyCode::Char(character) => app.push_filter_char(character),

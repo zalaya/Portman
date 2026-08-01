@@ -32,8 +32,6 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     spans.push(sep());
     spans.push(Span::styled(format!("sort: {}", app.sort.label()), Style::default().fg(theme::muted())));
     spans.push(sep());
-    spans.push(Span::styled(format!("theme: {}", theme::name()), Style::default().fg(theme::secondary())));
-    spans.push(sep());
     spans.push(Span::styled("Ctrl+K help", Style::default().fg(theme::muted())));
 
     let block = Block::default()

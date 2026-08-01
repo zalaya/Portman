@@ -4,11 +4,16 @@ use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
 
 use crate::app::KillTarget;
+use crate::data::process::KillSignal;
 use crate::theme;
 use crate::ui::widgets::popup::Popup;
 
 pub fn render(frame: &mut Frame, area: Rect, target: &KillTarget) {
-    let question = format!("Kill {}?", target.label);
+    let verb = match target.signal {
+        KillSignal::Terminate => "Terminate",
+        KillSignal::Force => "Force kill",
+    };
+    let question = format!("{verb} {}?", target.label);
     let width = (question.len() as u16 + 8).clamp(36, area.width.saturating_sub(4));
 
     let lines = vec![

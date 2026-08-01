@@ -1,22 +1,32 @@
+mod browser;
+mod clipboard;
+
 use anyhow::Result;
 
 use crate::app::App;
-use crate::clipboard;
+use crate::data::network::Protocol;
+use crate::data::process::KillSignal;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Action {
+    Terminate,
     Kill,
+    OpenInBrowser,
     CopyPid,
     CopyAddress,
+    CopyCommand,
     Refresh,
 }
 
 impl Action {
     pub fn label(self) -> &'static str {
         match self {
-            Action::Kill => "Kill process",
+            Action::Terminate => "Terminate (SIGTERM)",
+            Action::Kill => "Force kill (SIGKILL)",
+            Action::OpenInBrowser => "Open in browser",
             Action::CopyPid => "Copy PID",
             Action::CopyAddress => "Copy address",
+            Action::CopyCommand => "Copy full command",
             Action::Refresh => "Refresh list",
         }
     }
@@ -35,7 +45,20 @@ impl App {
         };
 
         let label = format!("{} ({})", usage.process_label(), usage.address());
-        let actions = vec![Action::Kill, Action::CopyPid, Action::CopyAddress, Action::Refresh];
+        let mut actions = vec![Action::Terminate, Action::Kill];
+
+        if usage.protocol == Protocol::Tcp {
+            actions.push(Action::OpenInBrowser);
+        }
+
+        actions.push(Action::CopyPid);
+        actions.push(Action::CopyAddress);
+
+        if self.details.as_ref().is_some_and(|details| !details.process.cmd.is_empty()) {
+            actions.push(Action::CopyCommand);
+        }
+
+        actions.push(Action::Refresh);
 
         self.action_menu = Some(ActionMenu { label, actions, selected: 0 });
     }
@@ -66,8 +89,16 @@ impl App {
         };
 
         match action {
+            Action::Terminate => {
+                self.request_kill(KillSignal::Terminate);
+                return Ok(());
+            }
             Action::Kill => {
-                self.request_kill();
+                self.request_kill(KillSignal::Force);
+                return Ok(());
+            }
+            Action::OpenInBrowser => {
+                self.open_selected_in_browser();
                 return Ok(());
             }
             Action::Refresh => return self.refresh(),
@@ -77,26 +108,12 @@ impl App {
         let value = match action {
             Action::CopyPid => self.selected_usage().map(|usage| usage.pid.to_string()),
             Action::CopyAddress => self.selected_usage().map(|usage| usage.address()),
-            Action::Kill | Action::Refresh => unreachable!(),
+            Action::CopyCommand => self.details.as_ref().map(|details| details.process.cmd.join(" ")),
+            Action::Terminate | Action::Kill | Action::OpenInBrowser | Action::Refresh => unreachable!(),
         };
 
         self.copy_to_clipboard(action.label(), value);
 
         Ok(())
-    }
-
-    fn copy_to_clipboard(&mut self, label: &str, value: Option<String>) {
-        let Some(value) = value else {
-            self.status = Some(format!("Nothing to copy for \"{label}\""));
-            return;
-        };
-
-        match clipboard::copy(value.clone()) {
-            Ok(()) => {
-                self.status = Some(format!("Copied: {value}"));
-                self.log_event(format!("Copied {label} — {value}"));
-            }
-            Err(error) => self.status = Some(format!("Could not copy to clipboard: {error}")),
-        }
     }
 }

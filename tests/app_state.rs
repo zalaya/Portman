@@ -2,6 +2,7 @@ mod support;
 
 use portman::app::{ App, SortKey };
 use portman::data::port::Risk;
+use portman::data::process::KillSignal;
 
 #[test]
 fn killing_portman_itself_is_blocked() -> anyhow::Result<()> {
@@ -10,7 +11,7 @@ fn killing_portman_itself_is_blocked() -> anyhow::Result<()> {
     app.items = vec![support::loopback_tcp(9999, support::own_pid(), "test-harness")];
     app.state.select(Some(0));
 
-    app.request_kill();
+    app.request_kill(KillSignal::Force);
 
     assert!(app.kill_target.is_none(), "should refuse to set up a kill target for portman's own process");
     assert_eq!(app.status.as_deref(), Some("That's portman itself — can't kill it from here"));
@@ -25,10 +26,11 @@ fn killing_another_process_asks_for_confirmation_first() -> anyhow::Result<()> {
     app.items = vec![support::loopback_tcp(3000, 424_242, "node")];
     app.state.select(Some(0));
 
-    app.request_kill();
+    app.request_kill(KillSignal::Terminate);
 
     let target = app.kill_target.as_ref().expect("should stage a kill target for a process that isn't us");
     assert_eq!(target.pid, 424_242);
+    assert_eq!(target.signal, KillSignal::Terminate);
 
     app.cancel_kill();
     assert!(app.kill_target.is_none(), "cancelling should clear the pending kill");
@@ -75,10 +77,10 @@ fn cycling_sort_visits_every_key_and_returns_to_port() -> anyhow::Result<()> {
 }
 
 #[test]
-fn opening_the_action_menu_always_offers_kill_copy_and_refresh() -> anyhow::Result<()> {
+fn opening_the_action_menu_on_a_tcp_port_offers_the_browser_action() -> anyhow::Result<()> {
     let mut app = App::new()?;
 
-    app.items = vec![support::loopback_tcp(8080, 1, "dev-server")];
+    app.items = vec![support::loopback_tcp(8080, u32::MAX, "dev-server")];
     app.state.select(Some(0));
 
     app.open_action_menu();
@@ -86,10 +88,30 @@ fn opening_the_action_menu_always_offers_kill_copy_and_refresh() -> anyhow::Resu
     let menu = app.action_menu.as_ref().expect("selecting a row and opening the menu should populate it");
     let labels: Vec<&str> = menu.actions.iter().map(|action| action.label()).collect();
 
-    assert_eq!(labels, ["Kill process", "Copy PID", "Copy address", "Refresh list"]);
+    assert_eq!(
+        labels,
+        ["Terminate (SIGTERM)", "Force kill (SIGKILL)", "Open in browser", "Copy PID", "Copy address", "Refresh list"],
+        "a fake PID has no resolvable process details, so \"Copy full command\" shouldn't appear"
+    );
 
     app.close_action_menu();
     assert!(app.action_menu.is_none());
+
+    Ok(())
+}
+
+#[test]
+fn opening_the_action_menu_offers_copy_command_when_details_have_a_command_line() -> anyhow::Result<()> {
+    let mut app = App::new()?;
+
+    app.items = vec![support::loopback_tcp(8080, u32::MAX, "dev-server")];
+    app.state.select(Some(0));
+    app.details = Some(support::details_with_command(u32::MAX, vec!["node", "server.js"]));
+
+    app.open_action_menu();
+
+    let menu = app.action_menu.as_ref().unwrap();
+    assert!(menu.actions.iter().any(|action| action.label() == "Copy full command"));
 
     Ok(())
 }
