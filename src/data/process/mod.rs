@@ -4,4 +4,4 @@ mod table;
 
 pub use details::{ ProcessDetails, details };
 pub use kill::{ KillOutcome, KillSignal, kill };
-pub use table::ProcessTable;
+pub use table::{ ProcessTable, UserDirectory };

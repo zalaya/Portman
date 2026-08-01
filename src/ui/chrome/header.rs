@@ -10,8 +10,9 @@ use crate::ui::theme;
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let total = app.items.len();
-    let exposed = app.items.iter().filter(|usage| usage.is_exposed()).count();
-    let critical = app.items.iter().filter(|usage| usage.risk() == Risk::Critical).count();
+    let (exposed, critical) = app.items.iter().fold((0, 0), |(exposed, critical), usage| {
+        (exposed + usize::from(usage.is_exposed()), critical + usize::from(usage.risk() == Risk::Critical))
+    });
     let new = app.new_keys.len();
 
     let mut spans = vec![

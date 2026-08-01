@@ -12,6 +12,7 @@ use ratatui::widgets::TableState;
 
 use crate::data;
 use crate::data::port::PortUsage;
+use crate::data::process::UserDirectory;
 
 pub use actions::{ Action, ActionMenu };
 pub use activity::Event;
@@ -35,6 +36,7 @@ pub struct App {
     pub show_activity: bool,
     pub show_help: bool,
     seen_keys: Option<HashSet<ListenerKey>>,
+    users: UserDirectory,
 }
 
 impl App {
@@ -53,6 +55,7 @@ impl App {
             show_activity: false,
             show_help: false,
             seen_keys: None,
+            users: UserDirectory::snapshot(),
         };
 
         app.refresh()?;
@@ -66,6 +69,7 @@ impl App {
         let previous_keys = self.seen_keys.clone();
 
         self.items = data::scan_ports()?;
+        self.users = UserDirectory::snapshot();
 
         let current_keys: HashSet<ListenerKey> = self.items.iter().map(listener_key).collect();
 

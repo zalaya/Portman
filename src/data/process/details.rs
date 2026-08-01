@@ -1,4 +1,6 @@
-use sysinfo::{ Pid, ProcessesToUpdate, System, Users };
+use sysinfo::{ Pid, ProcessesToUpdate, System };
+
+use super::table::UserDirectory;
 
 pub struct ProcessDetails {
     pub pid: u32,
@@ -13,15 +15,14 @@ pub struct ProcessDetails {
     pub cmd: Vec<String>,
 }
 
-pub fn details(pid: u32) -> Option<ProcessDetails> {
+pub fn details(pid: u32, users: &UserDirectory) -> Option<ProcessDetails> {
     let mut system = System::new();
     let sysinfo_pid = Pid::from_u32(pid);
 
     system.refresh_processes(ProcessesToUpdate::Some(&[sysinfo_pid]), true);
 
     let process = system.process(sysinfo_pid)?;
-    let users = Users::new_with_refreshed_list();
-    let user = process.user_id().and_then(|uid| users.get_user_by_id(uid)).map(|user| user.name().to_string());
+    let user = process.user_id().and_then(|uid| users.name_for(uid));
 
     Some(ProcessDetails {
         pid,

@@ -63,7 +63,7 @@ impl App {
             .map(|usage| (usage.pid, usage.address(), usage.bind_description(), usage.is_exposed(), usage.risk()));
 
         self.details = selected.and_then(|(pid, address, bind, exposed, risk)| {
-            process::details(pid).map(|process| Details { address, bind, exposed, risk, process })
+            process::details(pid, &self.users).map(|process| Details { address, bind, exposed, risk, process })
         });
     }
 }
