@@ -1,6 +1,6 @@
 [package]
 name = "portman"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "A fast, keyboard-driven TUI for seeing what's listening on your machine's ports — and shutting it down."
 license = "MIT"
@@ -15,6 +15,8 @@ arboard = "3.4"
 crossterm = "0.29.0"
 netstat2 = "0.11.2"
 ratatui = "0.30.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 sysinfo = "0.39.6"
 
 [dev-dependencies]
