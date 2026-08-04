@@ -1,8 +1,8 @@
 use std::net::IpAddr;
 
 use crate::app::App;
-use crate::data::port::PortUsage;
-use crate::system::browser;
+use crate::domain::port::PortUsage;
+use crate::platform::browser;
 
 impl App {
     pub(super) fn open_selected_in_browser(&mut self) {
@@ -37,7 +37,7 @@ fn host(local_addr: &IpAddr) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::network::Protocol;
+    use crate::domain::network::Protocol;
 
     fn usage(port: u16, local_addr: [u8; 4]) -> PortUsage {
         PortUsage { port, protocol: Protocol::Tcp, pid: 1, process_name: None, local_addr: IpAddr::from(local_addr) }

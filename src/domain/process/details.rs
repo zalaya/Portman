@@ -1,6 +1,6 @@
 use sysinfo::{ Pid, ProcessesToUpdate, System };
 
-use super::table::UserDirectory;
+use super::user_directory::UserDirectory;
 
 pub struct ProcessDetails {
     pub pid: u32,

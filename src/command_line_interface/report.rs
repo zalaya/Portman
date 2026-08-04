@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::data::port::{ PortUsage, Risk };
+use crate::domain::port::{ PortUsage, Risk };
 
 #[derive(Serialize)]
 pub struct PortReport {
@@ -49,7 +49,7 @@ mod tests {
     use std::net::IpAddr;
 
     use super::*;
-    use crate::data::network::Protocol;
+    use crate::domain::network::Protocol;
 
     fn usage(port: u16, pid: u32, local_addr: [u8; 4]) -> PortUsage {
         PortUsage { port, protocol: Protocol::Tcp, pid, process_name: Some("test".to_string()), local_addr: IpAddr::from(local_addr) }

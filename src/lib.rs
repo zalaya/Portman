@@ -1,6 +1,6 @@
 pub mod app;
-pub mod cli;
-pub mod data;
-pub mod system;
+pub mod command_line_interface;
+pub mod domain;
+pub mod platform;
 pub mod terminal;
 mod ui;

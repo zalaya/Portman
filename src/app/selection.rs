@@ -1,6 +1,6 @@
 use crate::app::App;
-use crate::data::port::Risk;
-use crate::data::process;
+use crate::domain::port::Risk;
+use crate::domain::process;
 
 pub struct Details {
     pub address: String,
@@ -15,11 +15,11 @@ impl App {
         let filtered = self.filtered();
 
         if filtered.is_empty() {
-            self.state.select(None);
+            self.selected = None;
         } else {
             let index = pid.and_then(|pid| filtered.iter().position(|usage| usage.pid == pid)).unwrap_or(0);
 
-            self.state.select(Some(index));
+            self.selected = Some(index);
         }
 
         self.refresh_details();
@@ -32,12 +32,12 @@ impl App {
             return;
         }
 
-        let next = match self.state.selected() {
+        let next = match self.selected {
             Some(i) => (i + 1) % len,
             None => 0,
         };
 
-        self.state.select(Some(next));
+        self.selected = Some(next);
         self.refresh_details();
     }
 
@@ -48,12 +48,12 @@ impl App {
             return;
         }
 
-        let previous = match self.state.selected() {
+        let previous = match self.selected {
             Some(0) | None => len - 1,
             Some(i) => i - 1,
         };
 
-        self.state.select(Some(previous));
+        self.selected = Some(previous);
         self.refresh_details();
     }
 

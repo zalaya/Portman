@@ -5,7 +5,7 @@ use anyhow::Result;
 use crossterm::execute;
 use crossterm::terminal::{ EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode };
 use portman::app::App;
-use portman::cli::{ self, Command };
+use portman::command_line_interface::{ self as cli, Command };
 use portman::terminal::event_loop;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;

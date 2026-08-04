@@ -2,7 +2,7 @@ use anyhow::Result;
 use crossterm::event::{ KeyCode, KeyEvent, KeyModifiers };
 
 use crate::app::App;
-use crate::data::process::KillSignal;
+use crate::domain::process::KillSignal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Flow {

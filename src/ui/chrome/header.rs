@@ -5,7 +5,7 @@ use ratatui::text::{ Line, Span };
 use ratatui::widgets::{ Block, Borders, Padding, Paragraph };
 
 use crate::app::App;
-use crate::data::port::Risk;
+use crate::domain::port::Risk;
 use crate::ui::theme;
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {

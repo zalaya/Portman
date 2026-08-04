@@ -2,7 +2,7 @@ mod support;
 
 use crossterm::event::{ KeyCode, KeyEvent, KeyModifiers };
 use portman::app::App;
-use portman::data::process::KillSignal;
+use portman::domain::process::KillSignal;
 use portman::terminal::input::{ Flow, handle_key };
 
 fn key(code: KeyCode) -> KeyEvent {
@@ -27,7 +27,7 @@ fn esc_cancels_a_pending_kill_instead_of_quitting() -> anyhow::Result<()> {
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(3000, 424_242, "node")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
     app.request_kill(KillSignal::Force);
     assert!(app.kill_target.is_some());
 
@@ -42,7 +42,7 @@ fn esc_closes_the_action_menu_instead_of_quitting() -> anyhow::Result<()> {
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(8080, 1, "dev-server")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
     app.open_action_menu();
 
     assert_eq!(handle_key(&mut app, key(KeyCode::Esc))?, Flow::Continue);

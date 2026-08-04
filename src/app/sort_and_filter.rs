@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::data::port::PortUsage;
+use crate::domain::port::PortUsage;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SortKey {
@@ -70,7 +70,7 @@ mod tests {
     use std::net::IpAddr;
 
     use super::*;
-    use crate::data::network::Protocol;
+    use crate::domain::network::Protocol;
 
     fn usage(port: u16, pid: u32, process_name: &str, local_addr: [u8; 4]) -> PortUsage {
         PortUsage {

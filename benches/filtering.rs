@@ -3,8 +3,8 @@ use std::net::IpAddr;
 
 use criterion::{ BenchmarkId, Criterion, criterion_group, criterion_main };
 use portman::app::{ SortKey, filtered_items };
-use portman::data::network::Protocol;
-use portman::data::port::PortUsage;
+use portman::domain::network::Protocol;
+use portman::domain::port::PortUsage;
 
 fn fixture_items(count: usize) -> Vec<PortUsage> {
     (0..count)

@@ -2,13 +2,13 @@ use ratatui::Frame;
 use ratatui::layout::{ Alignment, Constraint, Rect };
 use ratatui::style::{ Color, Modifier, Style };
 use ratatui::text::Line;
-use ratatui::widgets::{ Block, Borders, Cell, Padding, Row, Table };
+use ratatui::widgets::{ Block, Borders, Cell, Padding, Row, Table, TableState };
 
 use crate::app::{ self, App, SortKey };
-use crate::data::port::{ PortUsage, Risk };
+use crate::domain::port::{ PortUsage, Risk };
 use crate::ui::theme;
 
-pub fn render(frame: &mut Frame, area: Rect, app: &mut App) {
+pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let rows = app::filtered_items(&app.items, &app.filter, app.sort)
         .into_iter()
         .map(|usage| row_for(usage, app.new_keys.contains(&(usage.address(), usage.pid))))
@@ -33,7 +33,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &mut App) {
         .block(block)
         .row_highlight_style(Style::default().bg(theme::primary()).fg(Color::White).add_modifier(Modifier::BOLD));
 
-    frame.render_stateful_widget(table, area, &mut app.state);
+    frame.render_stateful_widget(table, area, &mut TableState::default().with_selected(app.selected));
 }
 
 fn header(sort: SortKey) -> Row<'static> {

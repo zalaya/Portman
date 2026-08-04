@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::app::App;
-use crate::data::process::{ self, KillOutcome, KillSignal };
+use crate::domain::process::{ self, KillOutcome, KillSignal };
 
 pub struct KillTarget {
     pub pid: u32,

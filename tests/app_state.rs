@@ -1,15 +1,15 @@
 mod support;
 
 use portman::app::{ App, SortKey };
-use portman::data::port::Risk;
-use portman::data::process::KillSignal;
+use portman::domain::port::Risk;
+use portman::domain::process::KillSignal;
 
 #[test]
 fn killing_portman_itself_is_blocked() -> anyhow::Result<()> {
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(9999, support::own_pid(), "test-harness")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
 
     app.request_kill(KillSignal::Force);
 
@@ -24,7 +24,7 @@ fn killing_another_process_asks_for_confirmation_first() -> anyhow::Result<()> {
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(3000, 424_242, "node")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
 
     app.request_kill(KillSignal::Terminate);
 
@@ -47,7 +47,7 @@ fn typing_into_the_filter_narrows_the_list_to_matches() -> anyhow::Result<()> {
         support::loopback_tcp(5432, 2, "postgres"),
         support::public_tcp(6379, 3, "redis-server"),
     ];
-    app.state.select(Some(0));
+    app.selected = Some(0);
 
     for character in "redis".chars() {
         app.push_filter_char(character);
@@ -81,7 +81,7 @@ fn opening_the_action_menu_on_a_tcp_port_offers_the_browser_action() -> anyhow::
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(8080, u32::MAX, "dev-server")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
 
     app.open_action_menu();
 
@@ -105,7 +105,7 @@ fn opening_the_action_menu_offers_copy_command_when_details_have_a_command_line(
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(8080, u32::MAX, "dev-server")];
-    app.state.select(Some(0));
+    app.selected = Some(0);
     app.details = Some(support::details_with_command(u32::MAX, vec!["node", "server.js"]));
 
     app.open_action_menu();
@@ -121,7 +121,7 @@ fn selecting_a_running_process_populates_the_details_pane() -> anyhow::Result<()
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(3000, support::own_pid(), "test-harness")];
-    app.state.select(None);
+    app.selected = None;
     app.next();
 
     let details = app.details.as_ref().expect("selecting a real, running process should populate the details pane");
@@ -138,7 +138,7 @@ fn filtering_to_no_matches_clears_selection_and_details() -> anyhow::Result<()> 
     let mut app = App::new()?;
 
     app.items = vec![support::loopback_tcp(3000, support::own_pid(), "test-harness")];
-    app.state.select(None);
+    app.selected = None;
     app.next();
     assert!(app.details.is_some(), "sanity check: something should be selected before we filter it away");
 
@@ -147,7 +147,7 @@ fn filtering_to_no_matches_clears_selection_and_details() -> anyhow::Result<()> 
     }
 
     assert!(app.filtered().is_empty());
-    assert!(app.state.selected().is_none());
+    assert!(app.selected.is_none());
     assert!(app.details.is_none());
 
     app.next();

@@ -4,7 +4,7 @@ use ratatui::style::{ Modifier, Style };
 use ratatui::text::{ Line, Span };
 
 use crate::app::KillTarget;
-use crate::data::process::KillSignal;
+use crate::domain::process::KillSignal;
 use crate::ui::theme;
 use crate::ui::widgets::popup::Popup;
 

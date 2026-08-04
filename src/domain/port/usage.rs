@@ -1,8 +1,8 @@
 use std::net::IpAddr;
 
 use super::risk::Risk;
-use crate::data::network::{ Listener, Protocol };
-use crate::data::process::ProcessTable;
+use crate::domain::network::{ Listener, Protocol };
+use crate::domain::process::ProcessTable;
 
 pub struct PortUsage {
     pub port: u16,
