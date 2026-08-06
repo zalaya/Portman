@@ -1,22 +1,10 @@
 use std::hint::black_box;
-use std::net::IpAddr;
 
 use criterion::{ BenchmarkId, Criterion, criterion_group, criterion_main };
-use portman::app::{ SortKey, filtered_items };
-use portman::domain::network::Protocol;
-use portman::domain::port::PortUsage;
+use portman::session::{ SortKey, filtered_items };
 
-fn fixture_items(count: usize) -> Vec<PortUsage> {
-    (0..count)
-        .map(|i| PortUsage {
-            port: (1024 + (i % 60_000)) as u16,
-            protocol: if i % 2 == 0 { Protocol::Tcp } else { Protocol::Udp },
-            pid: i as u32,
-            process_name: Some(format!("process-{i}")),
-            local_addr: if i % 3 == 0 { IpAddr::from([0, 0, 0, 0]) } else { IpAddr::from([127, 0, 0, 1]) },
-        })
-        .collect()
-}
+mod fixtures;
+use fixtures::{ config, fixture_items };
 
 const SORT_KEYS: [(&str, SortKey); 5] =
     [("port", SortKey::Port), ("bind", SortKey::Bind), ("process", SortKey::Process), ("pid", SortKey::Pid), ("risk", SortKey::Risk)];
@@ -52,5 +40,9 @@ fn bench_search(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_sort_keys, bench_search);
+criterion_group! {
+    name = benches;
+    config = config();
+    targets = bench_sort_keys, bench_search
+}
 criterion_main!(benches);

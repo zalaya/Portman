@@ -4,9 +4,9 @@ use std::process::ExitCode;
 use anyhow::Result;
 use crossterm::execute;
 use crossterm::terminal::{ EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode };
-use portman::app::App;
+use portman::session::Session;
 use portman::command_line_interface::{ self as cli, Command };
-use portman::terminal::event_loop;
+use portman::terminal::run as run_event_loop;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
@@ -38,8 +38,8 @@ fn main() -> Result<ExitCode> {
 
     let backend = CrosstermBackend::new(stdout());
     let mut terminal = Terminal::new(backend)?;
-    let mut app = App::new()?;
-    let result = event_loop::run(&mut terminal, &mut app);
+    let mut session = Session::new()?;
+    let result = run_event_loop(&mut terminal, &mut session);
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;

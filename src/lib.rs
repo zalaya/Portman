@@ -1,6 +1,7 @@
-pub mod app;
 pub mod command_line_interface;
-pub mod domain;
-pub mod platform;
+pub mod scanning;
+pub mod session;
 pub mod terminal;
-mod ui;
+mod render;
+
+pub mod platform;

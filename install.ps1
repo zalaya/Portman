@@ -1,5 +1,10 @@
 $ErrorActionPreference = "Stop"
 
+# Windows PowerShell 5.1 (the version that ships with Windows 10/11) defaults to TLS 1.0,
+# which GitHub rejects — Invoke-WebRequest then fails with "Could not create SSL/TLS secure
+# channel." PowerShell 7+ doesn't need this, but setting it unconditionally is harmless.
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
 $Repo = "zalaya/Portman"
 $BinName = "portman"
 $Target = "x86_64-pc-windows-msvc"

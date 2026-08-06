@@ -2,10 +2,10 @@
 
 use std::net::IpAddr;
 
-use portman::app::Details;
-use portman::domain::network::Protocol;
-use portman::domain::port::{ PortUsage, Risk };
-use portman::domain::process::ProcessDetails;
+use portman::session::Details;
+use portman::scanning::network::Protocol;
+use portman::scanning::port::{ PortUsage, Risk };
+use portman::scanning::process::ProcessDetails;
 
 pub fn own_pid() -> u32 {
     std::process::id()

@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::command_line_interface::report::evaluate;
-use crate::domain::port;
+use crate::scanning::port;
 
 pub fn run(json: bool) -> Result<bool> {
     let items = port::scan()?;
