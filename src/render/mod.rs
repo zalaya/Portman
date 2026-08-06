@@ -5,12 +5,13 @@ mod theme;
 mod widgets;
 
 use ratatui::Frame;
-use ratatui::layout::{ Constraint, Direction, Layout, Rect };
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
 use crate::session::Session;
 
 pub fn draw(frame: &mut Frame, session: &Session) {
-    let (header_area, search_area, status_area, content_area) = layout(frame.area(), session.status.is_some());
+    let (header_area, search_area, status_area, content_area) =
+        layout(frame.area(), session.status.is_some());
 
     chrome::render_header(frame, header_area, session);
     chrome::render_search(frame, search_area, session);
@@ -20,7 +21,8 @@ pub fn draw(frame: &mut Frame, session: &Session) {
     }
 
     let [list_area, details_area] =
-        Layout::horizontal([Constraint::Percentage(55), Constraint::Percentage(45)]).areas(content_area);
+        Layout::horizontal([Constraint::Percentage(55), Constraint::Percentage(45)])
+            .areas(content_area);
 
     panes::port_list::render(frame, list_area, session);
     panes::process_details::render(frame, details_area, session.details.as_ref());
@@ -51,7 +53,10 @@ fn layout(area: Rect, has_status: bool) -> (Rect, Rect, Option<Rect>, Rect) {
 
     constraints.push(Constraint::Min(0));
 
-    let chunks = Layout::default().direction(Direction::Vertical).constraints(constraints).split(area);
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(constraints)
+        .split(area);
 
     if has_status {
         (chunks[0], chunks[1], Some(chunks[2]), chunks[3])
@@ -68,8 +73,8 @@ mod tests {
     use super::*;
     use crate::scanning::network::Protocol;
     use crate::scanning::port::PortUsage;
-    use crate::scanning::process::{ KillSignal, ProcessDetails };
-    use crate::session::{ Action, ActionMenu, Details, KillTarget };
+    use crate::scanning::process::{KillSignal, ProcessDetails};
+    use crate::session::{Action, ActionMenu, Details, KillTarget};
 
     fn draw_into(width: u16, height: u16, session: &Session) {
         let backend = TestBackend::new(width, height);
@@ -79,7 +84,13 @@ mod tests {
     }
 
     fn port(pid: u32) -> PortUsage {
-        PortUsage { port: 8080, protocol: Protocol::Tcp, pid, process_name: Some("test".to_string()), local_addr: [0, 0, 0, 0].into() }
+        PortUsage {
+            port: 8080,
+            protocol: Protocol::Tcp,
+            pid,
+            process_name: Some("test".to_string()),
+            local_addr: [0, 0, 0, 0].into(),
+        }
     }
 
     fn process_details() -> ProcessDetails {
@@ -119,12 +130,19 @@ mod tests {
     #[test]
     fn draws_every_overlay_without_panicking() {
         let mut with_action_menu = blank_session();
-        with_action_menu.action_menu =
-            Some(ActionMenu { label: "test".to_string(), actions: vec![Action::Terminate, Action::Refresh], selected: 0 });
+        with_action_menu.action_menu = Some(ActionMenu {
+            label: "test".to_string(),
+            actions: vec![Action::Terminate, Action::Refresh],
+            selected: 0,
+        });
         draw_into(120, 40, &with_action_menu);
 
         let mut with_kill_confirm = blank_session();
-        with_kill_confirm.kill_target = Some(KillTarget { pid: 1, label: "test".to_string(), signal: KillSignal::Force });
+        with_kill_confirm.kill_target = Some(KillTarget {
+            pid: 1,
+            label: "test".to_string(),
+            signal: KillSignal::Force,
+        });
         draw_into(120, 40, &with_kill_confirm);
 
         let mut with_help = blank_session();

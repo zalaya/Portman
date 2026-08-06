@@ -1,4 +1,4 @@
-use sysinfo::{ Pid, ProcessesToUpdate, Signal, System, Uid, Users };
+use sysinfo::{Pid, ProcessesToUpdate, Signal, System, Uid, Users};
 
 pub struct ProcessTable(System);
 
@@ -26,7 +26,9 @@ impl UserDirectory {
     }
 
     fn name_for(&self, uid: &Uid) -> Option<String> {
-        self.0.get_user_by_id(uid).map(|user| user.name().to_string())
+        self.0
+            .get_user_by_id(uid)
+            .map(|user| user.name().to_string())
     }
 }
 
@@ -62,7 +64,11 @@ pub fn details(pid: u32, users: &UserDirectory) -> Option<ProcessDetails> {
         user,
         exe: process.exe().map(|path| path.display().to_string()),
         cwd: process.cwd().map(|path| path.display().to_string()),
-        cmd: process.cmd().iter().map(|arg| arg.to_string_lossy().into_owned()).collect(),
+        cmd: process
+            .cmd()
+            .iter()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect(),
     })
 }
 

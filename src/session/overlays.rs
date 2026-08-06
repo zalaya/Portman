@@ -11,7 +11,10 @@ pub struct Event {
 
 impl Session {
     pub(super) fn log_event(&mut self, message: String) {
-        self.events.push_front(Event { at: Instant::now(), message });
+        self.events.push_front(Event {
+            at: Instant::now(),
+            message,
+        });
         self.events.truncate(MAX_EVENTS);
     }
 
@@ -45,9 +48,21 @@ mod tests {
             session.log_event(format!("event {i}"));
         }
 
-        assert_eq!(session.events.len(), MAX_EVENTS, "the log should never grow past its cap");
-        assert_eq!(session.events.front().unwrap().message, format!("event {}", MAX_EVENTS + 49), "newest event goes first");
-        assert_eq!(session.events.back().unwrap().message, "event 50", "oldest events past the cap should be dropped");
+        assert_eq!(
+            session.events.len(),
+            MAX_EVENTS,
+            "the log should never grow past its cap"
+        );
+        assert_eq!(
+            session.events.front().unwrap().message,
+            format!("event {}", MAX_EVENTS + 49),
+            "newest event goes first"
+        );
+        assert_eq!(
+            session.events.back().unwrap().message,
+            "event 50",
+            "oldest events past the cap should be dropped"
+        );
 
         Ok(())
     }
@@ -58,7 +73,10 @@ mod tests {
 
         session.toggle_activity();
         assert!(session.show_activity);
-        assert!(!session.show_help, "toggling activity must not affect the help overlay");
+        assert!(
+            !session.show_help,
+            "toggling activity must not affect the help overlay"
+        );
 
         session.toggle_help();
         assert!(session.show_help);

@@ -1,7 +1,7 @@
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{ Modifier, Style };
-use ratatui::text::{ Line, Span };
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
 
 use crate::render::theme;
 use crate::render::widgets::Popup;
@@ -26,11 +26,23 @@ pub fn render(frame: &mut Frame, area: Rect) {
         .iter()
         .map(|(key, label)| {
             Line::from(vec![
-                Span::styled(format!("{key:<11}"), Style::default().fg(theme::secondary()).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    format!("{key:<11}"),
+                    Style::default()
+                        .fg(theme::secondary())
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(label.to_string(), Style::default().fg(theme::muted())),
             ])
         })
         .collect();
 
-    Popup { title: "Keybindings", border_color: theme::primary(), width, height, wrap: false }.render(frame, area, lines);
+    Popup {
+        title: "Keybindings",
+        border_color: theme::primary(),
+        width,
+        height,
+        wrap: false,
+    }
+    .render(frame, area, lines);
 }

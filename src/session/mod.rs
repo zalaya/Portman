@@ -4,18 +4,18 @@ mod overlays;
 mod selection;
 mod sort_and_filter;
 
-use std::collections::{ HashSet, VecDeque };
+use std::collections::{HashSet, VecDeque};
 
 use anyhow::Result;
 
-use crate::scanning::port::{ self, PortUsage };
+use crate::scanning::port::{self, PortUsage};
 use crate::scanning::process::UserDirectory;
 
-pub use actions::{ Action, ActionMenu };
+pub use actions::{Action, ActionMenu};
 pub use kill_workflow::KillTarget;
 pub use overlays::Event;
 pub use selection::Details;
-pub use sort_and_filter::{ SortKey, filtered_items };
+pub use sort_and_filter::{SortKey, filtered_items};
 
 type ListenerKey = (String, u32);
 
@@ -76,7 +76,13 @@ impl Session {
         };
 
         if let Some(previous_keys) = &previous_keys {
-            let messages = listener_change_messages(&self.items, &self.new_keys, &previous_items, previous_keys, &current_keys);
+            let messages = listener_change_messages(
+                &self.items,
+                &self.new_keys,
+                &previous_items,
+                previous_keys,
+                &current_keys,
+            );
 
             for message in messages {
                 self.log_event(message);
@@ -94,7 +100,9 @@ impl Session {
     }
 
     fn selected_usage(&self) -> Option<&PortUsage> {
-        self.filtered().into_iter().nth(self.selected.unwrap_or(usize::MAX))
+        self.filtered()
+            .into_iter()
+            .nth(self.selected.unwrap_or(usize::MAX))
     }
 }
 
@@ -112,16 +120,31 @@ fn listener_change_messages(
     let mut messages: Vec<String> = current_items
         .iter()
         .filter(|usage| new_keys.contains(&listener_key(usage)))
-        .map(|usage| format!("Opened {} — {} ({})", usage.address(), usage.process_label(), usage.pid))
+        .map(|usage| {
+            format!(
+                "Opened {} — {} ({})",
+                usage.address(),
+                usage.process_label(),
+                usage.pid
+            )
+        })
         .collect();
 
-    let closed_keys: HashSet<ListenerKey> = previous_keys.difference(current_keys).cloned().collect();
+    let closed_keys: HashSet<ListenerKey> =
+        previous_keys.difference(current_keys).cloned().collect();
 
     messages.extend(
         previous_items
             .iter()
             .filter(|usage| closed_keys.contains(&listener_key(usage)))
-            .map(|usage| format!("Closed {} — {} ({})", usage.address(), usage.process_label(), usage.pid)),
+            .map(|usage| {
+                format!(
+                    "Closed {} — {} ({})",
+                    usage.address(),
+                    usage.process_label(),
+                    usage.pid
+                )
+            }),
     );
 
     messages
@@ -135,7 +158,13 @@ mod tests {
     use crate::scanning::network::Protocol;
 
     fn usage(port: u16, pid: u32) -> PortUsage {
-        PortUsage { port, protocol: Protocol::Tcp, pid, process_name: Some("test".to_string()), local_addr: IpAddr::from([127, 0, 0, 1]) }
+        PortUsage {
+            port,
+            protocol: Protocol::Tcp,
+            pid,
+            process_name: Some("test".to_string()),
+            local_addr: IpAddr::from([127, 0, 0, 1]),
+        }
     }
 
     #[test]
@@ -143,7 +172,13 @@ mod tests {
         let current = vec![usage(3000, 1)];
         let new_keys = HashSet::from([listener_key(&current[0])]);
 
-        let messages = listener_change_messages(&current, &new_keys, &[], &HashSet::new(), &HashSet::from([listener_key(&current[0])]));
+        let messages = listener_change_messages(
+            &current,
+            &new_keys,
+            &[],
+            &HashSet::new(),
+            &HashSet::from([listener_key(&current[0])]),
+        );
 
         assert_eq!(messages, ["Opened 3000/TCP — test (1)"]);
     }
@@ -153,7 +188,13 @@ mod tests {
         let previous = vec![usage(3000, 1)];
         let previous_keys = HashSet::from([listener_key(&previous[0])]);
 
-        let messages = listener_change_messages(&[], &HashSet::new(), &previous, &previous_keys, &HashSet::new());
+        let messages = listener_change_messages(
+            &[],
+            &HashSet::new(),
+            &previous,
+            &previous_keys,
+            &HashSet::new(),
+        );
 
         assert_eq!(messages, ["Closed 3000/TCP — test (1)"]);
     }

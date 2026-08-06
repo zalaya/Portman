@@ -1,7 +1,7 @@
 pub mod browser {
     use std::process::Command;
 
-    use anyhow::{ Result, bail };
+    use anyhow::{Result, bail};
 
     pub fn open(url: &str) -> Result<()> {
         let status = if cfg!(target_os = "macos") {
@@ -12,7 +12,11 @@ pub mod browser {
             Command::new("xdg-open").arg(url).status()
         }?;
 
-        if status.success() { Ok(()) } else { bail!("exited with {status}") }
+        if status.success() {
+            Ok(())
+        } else {
+            bail!("exited with {status}")
+        }
     }
 }
 

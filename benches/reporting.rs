@@ -1,10 +1,10 @@
 use std::hint::black_box;
 
-use criterion::{ BenchmarkId, Criterion, criterion_group, criterion_main };
-use portman::command_line_interface::{ build_reports, evaluate };
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use portman::command_line_interface::{build_reports, evaluate};
 
 mod fixtures;
-use fixtures::{ config, fixture_items };
+use fixtures::{config, fixture_items};
 
 fn bench_build_reports(c: &mut Criterion) {
     let mut group = c.benchmark_group("report/build_reports");

@@ -3,9 +3,11 @@ use std::process::ExitCode;
 
 use anyhow::Result;
 use crossterm::execute;
-use crossterm::terminal::{ EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode };
+use crossterm::terminal::{
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+};
+use portman::command_line_interface::{self as cli, Command};
 use portman::session::Session;
-use portman::command_line_interface::{ self as cli, Command };
 use portman::terminal::run as run_event_loop;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
@@ -28,7 +30,11 @@ fn main() -> Result<ExitCode> {
         }
         Ok(Command::Check { json }) => {
             let ok = cli::run_check(json)?;
-            return Ok(if ok { ExitCode::SUCCESS } else { ExitCode::FAILURE });
+            return Ok(if ok {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            });
         }
         Ok(Command::Interactive) => {}
     }

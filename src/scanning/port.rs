@@ -2,12 +2,12 @@ use std::net::IpAddr;
 
 use anyhow::Result;
 
-use crate::scanning::network::{ self, Listener, Protocol };
-use crate::scanning::process::{ self, ProcessTable };
+use crate::scanning::network::{self, Listener, Protocol};
+use crate::scanning::process::{self, ProcessTable};
 
 const SENSITIVE_PORTS: &[u16] = &[
-    21, 22, 23, 25, 111, 135, 139, 445, 1433, 1521, 2375, 2376, 3306, 3389, 5432, 5900, 5901, 6379, 7001, 8020, 9200, 9300, 11211, 27017,
-    27018, 50070,
+    21, 22, 23, 25, 111, 135, 139, 445, 1433, 1521, 2375, 2376, 3306, 3389, 5432, 5900, 5901, 6379,
+    7001, 8020, 9200, 9300, 11211, 27017, 27018, 50070,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,10 +67,21 @@ pub struct PortUsage {
 
 impl PortUsage {
     pub fn resolve(processes: &ProcessTable, listener: Listener) -> Self {
-        let Listener { port, protocol, pid, local_addr } = listener;
+        let Listener {
+            port,
+            protocol,
+            pid,
+            local_addr,
+        } = listener;
         let process_name = processes.resolve(pid);
 
-        Self { port, protocol, pid, process_name, local_addr }
+        Self {
+            port,
+            protocol,
+            pid,
+            process_name,
+            local_addr,
+        }
     }
 
     pub fn address(&self) -> String {
@@ -93,11 +104,17 @@ impl PortUsage {
 
     pub fn bind_description(&self) -> String {
         if self.local_addr.is_loopback() {
-            format!("Localhost only ({}) — Not reachable from the network", self.local_addr)
+            format!(
+                "Localhost only ({}) — Not reachable from the network",
+                self.local_addr
+            )
         } else if self.local_addr.is_unspecified() {
             format!("Public ({}) — Reachable from the network", self.local_addr)
         } else {
-            format!("Specific interface ({}) — Reachable from that network", self.local_addr)
+            format!(
+                "Specific interface ({}) — Reachable from that network",
+                self.local_addr
+            )
         }
     }
 
@@ -114,7 +131,9 @@ impl PortUsage {
     }
 
     pub fn matches(&self, lowercase_needle: &str) -> bool {
-        self.process_label().to_lowercase().contains(lowercase_needle)
+        self.process_label()
+            .to_lowercase()
+            .contains(lowercase_needle)
             || self.address().to_lowercase().contains(lowercase_needle)
             || self.pid.to_string().contains(lowercase_needle)
             || self.bind_label().to_lowercase().contains(lowercase_needle)
@@ -124,7 +143,10 @@ impl PortUsage {
 pub fn scan() -> Result<Vec<PortUsage>> {
     let processes = process::ProcessTable::snapshot();
 
-    Ok(network::scan()?.into_iter().map(|listener| PortUsage::resolve(&processes, listener)).collect())
+    Ok(network::scan()?
+        .into_iter()
+        .map(|listener| PortUsage::resolve(&processes, listener))
+        .collect())
 }
 
 #[cfg(test)]
@@ -132,7 +154,13 @@ mod tests {
     use super::*;
 
     fn usage(local_addr: [u8; 4]) -> PortUsage {
-        PortUsage { port: 8080, protocol: Protocol::Tcp, pid: 1, process_name: Some("test".to_string()), local_addr: IpAddr::from(local_addr) }
+        PortUsage {
+            port: 8080,
+            protocol: Protocol::Tcp,
+            pid: 1,
+            process_name: Some("test".to_string()),
+            local_addr: IpAddr::from(local_addr),
+        }
     }
 
     #[test]

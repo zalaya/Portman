@@ -1,5 +1,5 @@
-use crate::session::Session;
 use crate::scanning::port::PortUsage;
+use crate::session::Session;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SortKey {
@@ -49,10 +49,17 @@ impl Session {
     }
 }
 
-pub fn filtered_items<'a>(items: &'a [PortUsage], filter: &str, sort: SortKey) -> Vec<&'a PortUsage> {
+pub fn filtered_items<'a>(
+    items: &'a [PortUsage],
+    filter: &str,
+    sort: SortKey,
+) -> Vec<&'a PortUsage> {
     let needle = filter.to_lowercase();
 
-    let mut items: Vec<&PortUsage> = items.iter().filter(|usage| filter.is_empty() || usage.matches(&needle)).collect();
+    let mut items: Vec<&PortUsage> = items
+        .iter()
+        .filter(|usage| filter.is_empty() || usage.matches(&needle))
+        .collect();
 
     match sort {
         SortKey::Port => items.sort_by_key(|usage| usage.port),
@@ -92,20 +99,39 @@ mod tests {
             seen.push(key);
         }
 
-        assert_eq!(key.next(), SortKey::Port, "the fifth `next()` should wrap back to the start");
-        assert_eq!(seen, [SortKey::Port, SortKey::Bind, SortKey::Process, SortKey::Pid, SortKey::Risk]);
+        assert_eq!(
+            key.next(),
+            SortKey::Port,
+            "the fifth `next()` should wrap back to the start"
+        );
+        assert_eq!(
+            seen,
+            [
+                SortKey::Port,
+                SortKey::Bind,
+                SortKey::Process,
+                SortKey::Pid,
+                SortKey::Risk
+            ]
+        );
     }
 
     #[test]
     fn empty_filter_keeps_every_item() {
-        let items = vec![usage(80, 1, "nginx", [127, 0, 0, 1]), usage(443, 2, "caddy", [0, 0, 0, 0])];
+        let items = vec![
+            usage(80, 1, "nginx", [127, 0, 0, 1]),
+            usage(443, 2, "caddy", [0, 0, 0, 0]),
+        ];
 
         assert_eq!(filtered_items(&items, "", SortKey::Port).len(), 2);
     }
 
     #[test]
     fn filter_matches_process_name_case_insensitively() {
-        let items = vec![usage(80, 1, "nginx", [127, 0, 0, 1]), usage(443, 2, "caddy", [0, 0, 0, 0])];
+        let items = vec![
+            usage(80, 1, "nginx", [127, 0, 0, 1]),
+            usage(443, 2, "caddy", [0, 0, 0, 0]),
+        ];
 
         let found = filtered_items(&items, "NGINX", SortKey::Port);
 
@@ -117,9 +143,21 @@ mod tests {
     fn filter_also_matches_port_pid_and_bind_label() {
         let items = vec![usage(8080, 42, "node", [127, 0, 0, 1])];
 
-        assert_eq!(filtered_items(&items, "8080", SortKey::Port).len(), 1, "should match by port");
-        assert_eq!(filtered_items(&items, "42", SortKey::Port).len(), 1, "should match by pid");
-        assert_eq!(filtered_items(&items, "localhost", SortKey::Port).len(), 1, "should match by bind label");
+        assert_eq!(
+            filtered_items(&items, "8080", SortKey::Port).len(),
+            1,
+            "should match by port"
+        );
+        assert_eq!(
+            filtered_items(&items, "42", SortKey::Port).len(),
+            1,
+            "should match by pid"
+        );
+        assert_eq!(
+            filtered_items(&items, "localhost", SortKey::Port).len(),
+            1,
+            "should match by bind label"
+        );
     }
 
     #[test]
@@ -132,6 +170,9 @@ mod tests {
 
         let sorted = filtered_items(&items, "", SortKey::Risk);
 
-        assert_eq!(sorted.iter().map(|usage| usage.pid).collect::<Vec<_>>(), [2, 1, 3]);
+        assert_eq!(
+            sorted.iter().map(|usage| usage.pid).collect::<Vec<_>>(),
+            [2, 1, 3]
+        );
     }
 }

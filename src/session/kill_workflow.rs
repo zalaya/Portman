@@ -1,7 +1,7 @@
 use anyhow::Result;
 
+use crate::scanning::process::{self, KillOutcome, KillSignal};
 use crate::session::Session;
-use crate::scanning::process::{ self, KillOutcome, KillSignal };
 
 pub struct KillTarget {
     pub pid: u32,
@@ -41,9 +41,18 @@ impl Session {
                 self.log_event(format!("{} {}", target.signal.verb(), target.label));
                 return self.refresh();
             }
-            KillOutcome::Failed => self.status = Some(format!("Could not kill {} — check permissions", target.label)),
-            KillOutcome::ProcessNotFound => self.status = Some(format!("{} is already gone", target.label)),
-            KillOutcome::SignalUnsupported => self.status = Some("That signal isn't supported on this platform".to_string()),
+            KillOutcome::Failed => {
+                self.status = Some(format!(
+                    "Could not kill {} — check permissions",
+                    target.label
+                ))
+            }
+            KillOutcome::ProcessNotFound => {
+                self.status = Some(format!("{} is already gone", target.label))
+            }
+            KillOutcome::SignalUnsupported => {
+                self.status = Some("That signal isn't supported on this platform".to_string())
+            }
         }
 
         Ok(())

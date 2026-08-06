@@ -55,18 +55,30 @@ mod tests {
 
     #[test]
     fn json_flag_alone_means_a_one_shot_scan() {
-        assert_eq!(parse_args(&args(&["--json"])), Ok(Command::Scan { json: true }));
+        assert_eq!(
+            parse_args(&args(&["--json"])),
+            Ok(Command::Scan { json: true })
+        );
     }
 
     #[test]
     fn check_without_json_is_human_readable() {
-        assert_eq!(parse_args(&args(&["check"])), Ok(Command::Check { json: false }));
+        assert_eq!(
+            parse_args(&args(&["check"])),
+            Ok(Command::Check { json: false })
+        );
     }
 
     #[test]
     fn check_and_json_can_be_combined_in_any_order() {
-        assert_eq!(parse_args(&args(&["check", "--json"])), Ok(Command::Check { json: true }));
-        assert_eq!(parse_args(&args(&["--json", "check"])), Ok(Command::Check { json: true }));
+        assert_eq!(
+            parse_args(&args(&["check", "--json"])),
+            Ok(Command::Check { json: true })
+        );
+        assert_eq!(
+            parse_args(&args(&["--json", "check"])),
+            Ok(Command::Check { json: true })
+        );
     }
 
     #[test]
@@ -76,6 +88,9 @@ mod tests {
 
     #[test]
     fn unknown_positional_argument_is_rejected() {
-        assert_eq!(parse_args(&args(&["scan"])), Err(ArgError("scan".to_string())));
+        assert_eq!(
+            parse_args(&args(&["scan"])),
+            Err(ArgError("scan".to_string()))
+        );
     }
 }

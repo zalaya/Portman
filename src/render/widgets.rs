@@ -1,11 +1,14 @@
 use ratatui::Frame;
-use ratatui::layout::{ Alignment, Constraint, Flex, Layout, Rect };
-use ratatui::style::{ Color, Modifier, Style };
+use ratatui::layout::{Alignment, Constraint, Flex, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Line;
-use ratatui::widgets::{ Block, Borders, Clear, Padding, Paragraph, Wrap };
+use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap};
 
 pub mod panel {
-    use super::{ Block, Borders, Color, Constraint, Flex, Frame, Layout, Line, Padding, Paragraph, Rect, Style };
+    use super::{
+        Block, Borders, Color, Constraint, Flex, Frame, Layout, Line, Padding, Paragraph, Rect,
+        Style,
+    };
 
     pub fn single_line(frame: &mut Frame, area: Rect, line: Line, border_color: Color) {
         let block = Block::default()
@@ -17,8 +20,12 @@ pub mod panel {
     }
 
     pub fn centered(area: Rect, width: u16, height: u16) -> Rect {
-        let [area] = Layout::horizontal([Constraint::Length(width)]).flex(Flex::Center).areas(area);
-        let [area] = Layout::vertical([Constraint::Length(height)]).flex(Flex::Center).areas(area);
+        let [area] = Layout::horizontal([Constraint::Length(width)])
+            .flex(Flex::Center)
+            .areas(area);
+        let [area] = Layout::vertical([Constraint::Length(height)])
+            .flex(Flex::Center)
+            .areas(area);
 
         area
     }
@@ -40,7 +47,11 @@ impl Popup<'_> {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(self.border_color))
             .title(Line::from(format!(" {} ", self.title)).alignment(Alignment::Center))
-            .title_style(Style::default().fg(self.border_color).add_modifier(Modifier::BOLD))
+            .title_style(
+                Style::default()
+                    .fg(self.border_color)
+                    .add_modifier(Modifier::BOLD),
+            )
             .padding(Padding::uniform(1));
 
         let mut paragraph = Paragraph::new(lines).block(block);

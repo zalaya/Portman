@@ -15,7 +15,10 @@ pub fn run(json: bool) -> Result<bool> {
         println!("{} critical port(s) exposed:", report.critical.len());
 
         for port in &report.critical {
-            println!("  {:<6} {:<5} {} ({})", port.port, port.protocol, port.process, port.pid);
+            println!(
+                "  {:<6} {:<5} {} ({})",
+                port.port, port.protocol, port.process, port.pid
+            );
         }
     }
 

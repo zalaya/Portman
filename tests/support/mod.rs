@@ -2,25 +2,49 @@
 
 use std::net::IpAddr;
 
-use portman::session::Details;
 use portman::scanning::network::Protocol;
-use portman::scanning::port::{ PortUsage, Risk };
+use portman::scanning::port::{PortUsage, Risk};
 use portman::scanning::process::ProcessDetails;
+use portman::session::Details;
 
 pub fn own_pid() -> u32 {
     std::process::id()
 }
 
-pub fn port_usage(port: u16, protocol: Protocol, pid: u32, process_name: Option<&str>, local_addr: IpAddr) -> PortUsage {
-    PortUsage { port, protocol, pid, process_name: process_name.map(str::to_string), local_addr }
+pub fn port_usage(
+    port: u16,
+    protocol: Protocol,
+    pid: u32,
+    process_name: Option<&str>,
+    local_addr: IpAddr,
+) -> PortUsage {
+    PortUsage {
+        port,
+        protocol,
+        pid,
+        process_name: process_name.map(str::to_string),
+        local_addr,
+    }
 }
 
 pub fn loopback_tcp(port: u16, pid: u32, process_name: &str) -> PortUsage {
-    port_usage(port, Protocol::Tcp, pid, Some(process_name), IpAddr::from([127, 0, 0, 1]))
+    port_usage(
+        port,
+        Protocol::Tcp,
+        pid,
+        Some(process_name),
+        IpAddr::from([127, 0, 0, 1]),
+    )
 }
 
 pub fn public_tcp(port: u16, pid: u32, process_name: &str) -> PortUsage {
-    port_usage(port, Protocol::Tcp, pid, Some(process_name), IpAddr::from([0, 0, 0, 0]))
+    port_usage(
+        port,
+        Protocol::Tcp,
+        pid,
+        Some(process_name),
+        IpAddr::from([0, 0, 0, 0]),
+    )
 }
 
 pub fn details_with_command(pid: u32, cmd: Vec<&str>) -> Details {

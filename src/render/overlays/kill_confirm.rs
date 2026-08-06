@@ -1,12 +1,12 @@
 use ratatui::Frame;
-use ratatui::layout::{ Alignment, Rect };
-use ratatui::style::{ Modifier, Style };
-use ratatui::text::{ Line, Span };
+use ratatui::layout::{Alignment, Rect};
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
 
-use crate::session::KillTarget;
-use crate::scanning::process::KillSignal;
 use crate::render::theme;
 use crate::render::widgets::Popup;
+use crate::scanning::process::KillSignal;
+use crate::session::KillTarget;
 
 pub fn render(frame: &mut Frame, area: Rect, target: &KillTarget) {
     let verb = match target.signal {
@@ -17,17 +17,38 @@ pub fn render(frame: &mut Frame, area: Rect, target: &KillTarget) {
     let width = (question.len() as u16 + 8).clamp(36, area.width.saturating_sub(4));
 
     let lines = vec![
-        Line::from(Span::styled(question, Style::default().add_modifier(Modifier::BOLD))).alignment(Alignment::Center),
+        Line::from(Span::styled(
+            question,
+            Style::default().add_modifier(Modifier::BOLD),
+        ))
+        .alignment(Alignment::Center),
         Line::from(""),
         Line::from(vec![
-            Span::styled("y", Style::default().fg(theme::danger()).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                "y",
+                Style::default()
+                    .fg(theme::danger())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::styled(" yes", Style::default().fg(theme::muted())),
             Span::raw("    "),
-            Span::styled("n", Style::default().fg(theme::primary()).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                "n",
+                Style::default()
+                    .fg(theme::primary())
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::styled(" no", Style::default().fg(theme::muted())),
         ])
         .alignment(Alignment::Center),
     ];
 
-    Popup { title: "⚠ Confirm", border_color: theme::danger(), width, height: 7, wrap: false }.render(frame, area, lines);
+    Popup {
+        title: "⚠ Confirm",
+        border_color: theme::danger(),
+        width,
+        height: 7,
+        wrap: false,
+    }
+    .render(frame, area, lines);
 }

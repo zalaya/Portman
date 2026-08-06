@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::scanning::port::{ PortUsage, Risk };
+use crate::scanning::port::{PortUsage, Risk};
 
 #[derive(Serialize)]
 pub struct PortReport {
@@ -38,7 +38,11 @@ pub fn build_reports(items: &[PortUsage]) -> Vec<PortReport> {
 }
 
 pub fn evaluate(items: &[PortUsage]) -> CheckReport {
-    let critical: Vec<PortReport> = items.iter().filter(|usage| usage.risk() == Risk::Critical).map(PortReport::from).collect();
+    let critical: Vec<PortReport> = items
+        .iter()
+        .filter(|usage| usage.risk() == Risk::Critical)
+        .map(PortReport::from)
+        .collect();
     let ok = critical.is_empty();
 
     CheckReport { ok, critical }
@@ -52,7 +56,13 @@ mod tests {
     use crate::scanning::network::Protocol;
 
     fn usage(port: u16, pid: u32, local_addr: [u8; 4]) -> PortUsage {
-        PortUsage { port, protocol: Protocol::Tcp, pid, process_name: Some("test".to_string()), local_addr: IpAddr::from(local_addr) }
+        PortUsage {
+            port,
+            protocol: Protocol::Tcp,
+            pid,
+            process_name: Some("test".to_string()),
+            local_addr: IpAddr::from(local_addr),
+        }
     }
 
     #[test]
@@ -78,7 +88,10 @@ mod tests {
     fn evaluate_ignores_exposed_but_non_sensitive_ports() {
         let items = vec![usage(8080, 1, [0, 0, 0, 0])];
 
-        assert!(evaluate(&items).ok, "an exposed dev server isn't Critical unless it's on a sensitive port");
+        assert!(
+            evaluate(&items).ok,
+            "an exposed dev server isn't Critical unless it's on a sensitive port"
+        );
     }
 
     #[test]

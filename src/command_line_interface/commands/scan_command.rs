@@ -13,7 +13,10 @@ pub fn run(json: bool) -> Result<()> {
         println!("No open ports found.");
     } else {
         for report in &reports {
-            println!("{:<6} {:<5} {:<20} {:<8} {}", report.port, report.protocol, report.process, report.pid, report.risk);
+            println!(
+                "{:<6} {:<5} {:<20} {:<8} {}",
+                report.port, report.protocol, report.process, report.pid, report.risk
+            );
         }
     }
 

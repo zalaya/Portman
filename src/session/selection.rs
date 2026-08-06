@@ -1,6 +1,6 @@
-use crate::session::Session;
 use crate::scanning::port::Risk;
 use crate::scanning::process;
+use crate::session::Session;
 
 pub struct Details {
     pub address: String,
@@ -17,7 +17,9 @@ impl Session {
         if filtered.is_empty() {
             self.selected = None;
         } else {
-            let index = pid.and_then(|pid| filtered.iter().position(|usage| usage.pid == pid)).unwrap_or(0);
+            let index = pid
+                .and_then(|pid| filtered.iter().position(|usage| usage.pid == pid))
+                .unwrap_or(0);
 
             self.selected = Some(index);
         }
@@ -58,12 +60,24 @@ impl Session {
     }
 
     fn refresh_details(&mut self) {
-        let selected = self
-            .selected_usage()
-            .map(|usage| (usage.pid, usage.address(), usage.bind_description(), usage.is_exposed(), usage.risk()));
+        let selected = self.selected_usage().map(|usage| {
+            (
+                usage.pid,
+                usage.address(),
+                usage.bind_description(),
+                usage.is_exposed(),
+                usage.risk(),
+            )
+        });
 
         self.details = selected.and_then(|(pid, address, bind, exposed, risk)| {
-            process::details(pid, &self.users).map(|process| Details { address, bind, exposed, risk, process })
+            process::details(pid, &self.users).map(|process| Details {
+                address,
+                bind,
+                exposed,
+                risk,
+                process,
+            })
         });
     }
 }
@@ -93,7 +107,11 @@ mod tests {
 
         session.next();
 
-        assert_eq!(session.selected, Some(0), "next() past the last row should wrap to the first");
+        assert_eq!(
+            session.selected,
+            Some(0),
+            "next() past the last row should wrap to the first"
+        );
 
         Ok(())
     }
@@ -106,7 +124,11 @@ mod tests {
 
         session.previous();
 
-        assert_eq!(session.selected, Some(2), "previous() before the first row should wrap to the last");
+        assert_eq!(
+            session.selected,
+            Some(2),
+            "previous() before the first row should wrap to the last"
+        );
 
         Ok(())
     }
